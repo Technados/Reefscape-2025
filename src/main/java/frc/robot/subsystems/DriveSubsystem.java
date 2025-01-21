@@ -84,6 +84,41 @@ public class DriveSubsystem extends SubsystemBase {
             m_rearRight.getPosition()
           });
 
+      // PathPlanner RobotConfig
+      private RobotConfig config;
+
+      public DriveSubsystem() {
+          // Load RobotConfig
+          try {
+              config = RobotConfig.fromGUISettings();
+          } catch (Exception e) {
+              e.printStackTrace();
+          }
+  
+          // Configure AutoBuilder at the end
+          configureAutoBuilder();
+      }
+  
+      private void configureAutoBuilder() {
+          AutoBuilder.configure(
+              this::getPose, // Robot pose supplier
+              this::resetOdometry, // Method to reset odometry
+              this::getChassisSpeeds, // Robot-relative ChassisSpeeds supplier
+              (speeds, feedforwards) -> driveRobotRelative(speeds), // Drive robot
+              new PPHolonomicDriveController( // Holonomic controller
+                  new PIDConstants(3.5, 0.0, 0.11), // Translation PID
+                  new PIDConstants(1.0, 0.0, 0.0)  // Rotation PID
+              ),
+              config, // RobotConfig loaded from PathPlanner GUI
+              () -> {
+                  // Flip paths for red alliance
+                  var alliance = DriverStation.getAlliance();
+                  return alliance.orElse(DriverStation.Alliance.Blue) != DriverStation.Alliance.Blue;
+              },
+              this // Subsystem requirements
+          );
+      }
+
 
   @Override
   public void periodic() {
@@ -154,6 +189,25 @@ public class DriveSubsystem extends SubsystemBase {
     m_rearLeft.setDesiredState(swerveModuleStates[2]);
     m_rearRight.setDesiredState(swerveModuleStates[3]);
   }
+
+  public void driveRobotRelative(ChassisSpeeds speeds) {
+    var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds);
+    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DriveConstants.kMaxSpeedMetersPerSecond);
+
+    m_frontLeft.setDesiredState(swerveModuleStates[0]);
+    m_frontRight.setDesiredState(swerveModuleStates[1]);
+    m_rearLeft.setDesiredState(swerveModuleStates[2]);
+    m_rearRight.setDesiredState(swerveModuleStates[3]);
+}
+
+public ChassisSpeeds getChassisSpeeds() {
+    return DriveConstants.kDriveKinematics.toChassisSpeeds(new SwerveModuleState[] {
+        m_frontLeft.getState(),
+        m_frontRight.getState(),
+        m_rearLeft.getState(),
+        m_rearRight.getState()
+    });
+}
 
   /** Sets the wheels into an X formation to prevent movement. */
   public Command setXCommand() {

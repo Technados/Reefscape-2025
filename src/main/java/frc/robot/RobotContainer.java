@@ -90,11 +90,14 @@ public class RobotContainer {
     // Set the ball intake to in/out when not running based on internal state
     m_algaeSubsystem.setDefaultCommand(m_algaeSubsystem.idleCommand());
 
-                autoChooser.addOption("Test Path", "Test Path");
-                autoChooser.addOption("none", null);
+    // register auto options to the shuffleboard           
+    autoChooser.addOption("none", null);
+    autoChooser.addOption("Routine1", "Routine1Path");
+    autoChooser.addOption("Routine2", "Routine2Path");
+    autoChooser.addOption("Routine3", "Routine3Path");
 
-                // Creating a new shuffleboard tab and adding the autoChooser
-                Shuffleboard.getTab("PathPlanner Autonomous").add(autoChooser);
+    // Creating a new shuffleboard tab and adding the autoChooser
+    Shuffleboard.getTab("PathPlanner Autonomous").add(autoChooser);
   }
 
   /**
@@ -157,17 +160,17 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
 
-          public Command getAutonomousCommand() {
+   public Command getAutonomousCommand() {
+    // Check if a path is selected
+    
+    if (autoChooser.getSelected() == null) {
+        return null;
+    }
 
-                if (autoChooser.getSelected() == null) {
-                        return null;
-                }
+    String selectedPath = autoChooser.getSelected();
 
-                m_robotDrive.resetOdometry(PathPlannerAuto.ge
-                autoChooser.getSelected()));
+    // Build and return the selected autonomous command
+    return AutoBuilder.buildAuto(selectedPath);
+}
 
-        
-                return AutoBuilder.buildAuto(autoChooser.getSelected());
-
-        }
 }
