@@ -92,9 +92,9 @@ public class RobotContainer {
 
     // register auto options to the shuffleboard           
     autoChooser.addOption("none", null);
-    autoChooser.addOption("Routine1", "Routine1Path");
-    autoChooser.addOption("Routine2", "Routine2Path");
-    autoChooser.addOption("Routine3", "Routine3Path");
+    autoChooser.addOption("Example Auto", "Example Path");
+    //autoChooser.addOption("Routine2", "Routine2Path");
+    //autoChooser.addOption("Routine3", "Routine3Path");
 
     // Creating a new shuffleboard tab and adding the autoChooser
     Shuffleboard.getTab("PathPlanner Autonomous").add(autoChooser);
