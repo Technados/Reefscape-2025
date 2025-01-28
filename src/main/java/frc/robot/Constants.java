@@ -22,9 +22,9 @@ public final class Constants {
   
 
   public static final class CoralSubsystemConstants {
-    public static final int kElevatorMotorCanId = 4;
-    public static final int kArmMotorCanId = 3;
-    public static final int kIntakeMotorCanId = 2;
+    public static final int kElevatorMotorCanId = 9;
+    public static final int kArmMotorCanId = 10;
+    public static final int kIntakeMotorCanId = 11;
 
     public static final class ElevatorSetpoints {
       public static final int kFeederStation = 0;
@@ -49,8 +49,8 @@ public final class Constants {
   }
 
   public static final class AlgaeSubsystemConstants {
-    public static final int kIntakeMotorCanId = 13;
-    public static final int kPivotMotorCanId = 14;
+    public static final int kIntakeMotorCanId = 12;
+    public static final int kPivotMotorCanId = 13;
 
     public static final class ArmSetpoints {
       public static final double kStow = 18.5;
@@ -72,9 +72,9 @@ public final class Constants {
     public static final double kMaxAngularSpeed = 2 * Math.PI; // radians per second
 
     // Chassis configuration
-    public static final double kTrackWidth = Units.inchesToMeters(21.5);
+    public static final double kTrackWidth = Units.inchesToMeters(23.5);
     // Distance between centers of right and left wheels on robot
-    public static final double kWheelBase = Units.inchesToMeters(21.5);
+    public static final double kWheelBase = Units.inchesToMeters(23.5);
     // Distance between front and back wheels on robot
     public static final SwerveDriveKinematics kDriveKinematics =
         new SwerveDriveKinematics(
@@ -90,15 +90,15 @@ public final class Constants {
     public static final double kBackRightChassisAngularOffset = Math.PI / 2;
 
     // SPARK MAX CAN IDs
-    public static final int kFrontLeftDrivingCanId = 6;
-    public static final int kRearLeftDrivingCanId = 12;
-    public static final int kFrontRightDrivingCanId = 8;
-    public static final int kRearRightDrivingCanId = 10;
+    public static final int kFrontLeftDrivingCanId = 1;
+    public static final int kRearLeftDrivingCanId = 3;
+    public static final int kFrontRightDrivingCanId = 2;
+    public static final int kRearRightDrivingCanId = 4;
 
     public static final int kFrontLeftTurningCanId = 5;
-    public static final int kRearLeftTurningCanId = 11;
-    public static final int kFrontRightTurningCanId = 7;
-    public static final int kRearRightTurningCanId = 9;
+    public static final int kRearLeftTurningCanId = 7;
+    public static final int kFrontRightTurningCanId = 6;
+    public static final int kRearRightTurningCanId = 8;
 
     public static final boolean kGyroReversed = false;
   }
@@ -107,7 +107,7 @@ public final class Constants {
     // The MAXSwerve module can be configured with one of three pinion gears: 12T,
     // 13T, or 14T. This changes the drive speed of the module (a pinion gear with
     // more teeth will result in a robot that drives faster).
-    public static final int kDrivingMotorPinionTeeth = 14;
+    public static final int kDrivingMotorPinionTeeth = 13;
 
     // Calculations required for driving motor conversion factors and feed forward
     public static final double kDrivingMotorFreeSpeedRps = NeoMotorConstants.kFreeSpeedRpm / 60;
@@ -124,7 +124,7 @@ public final class Constants {
   public static final class OIConstants {
     public static final int kDriverControllerPort = 0;
     public static final int kOperatorControllerPort = 1;
-    public static final double kDriveDeadband = 0.1;
+    public static final double kDriveDeadband = 0.05;
     public static final double kTriggerButtonThreshold = 0.2;
   }
 

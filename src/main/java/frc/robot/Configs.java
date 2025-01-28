@@ -117,8 +117,8 @@ public final class Configs {
   }
 
   public static final class AlgaeSubsystem {
-    public static final SparkFlexConfig intakeConfig = new SparkFlexConfig();
-    public static final SparkFlexConfig armConfig = new SparkFlexConfig();
+    public static final SparkMaxConfig intakeConfig = new SparkMaxConfig();
+    public static final SparkMaxConfig armConfig = new SparkMaxConfig();
 
     static {
       // Configure basic setting of the arm motor
