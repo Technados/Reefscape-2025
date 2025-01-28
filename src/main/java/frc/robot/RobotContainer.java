@@ -53,7 +53,7 @@ public class RobotContainer {
   private final AlgaeSubsystem m_algaeSubsystem = new AlgaeSubsystem();
   private final ClimberSubsystem m_climberSubsystem = new ClimberSubsystem();
 
-  private final DriveSubsystem driveSubsystem = new DriveSubsystem();
+  //private final DriveSubsystem driveSubsystem = new DriveSubsystem();
 
   // create autoChooser
   private final SendableChooser<String> autoChooser = new SendableChooser<>();
@@ -112,8 +112,8 @@ public class RobotContainer {
     // Left Stick Button -> Set swerve to X
     m_driverController.leftStick().whileTrue(m_robotDrive.setXCommand());
     // left and right bumpers determine which direction of the april tag to shift to for reef scoring position
-    m_driverController.leftBumper().whileTrue(driveSubsystem.alignToTargetCommand(Alignment.LEFT));
-    m_driverController.rightBumper().whileTrue(driveSubsystem.alignToTargetCommand(Alignment.RIGHT));
+    m_driverController.leftBumper().whileTrue(m_robotDrive.alignToTargetCommand(Alignment.LEFT));
+    m_driverController.rightBumper().whileTrue(m_robotDrive.alignToTargetCommand(Alignment.RIGHT));
     // Start Button -> Zero swerve heading
     m_driverController.start().onTrue(m_robotDrive.zeroHeadingCommand());
     
