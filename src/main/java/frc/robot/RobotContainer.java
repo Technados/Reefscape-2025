@@ -15,9 +15,9 @@ import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
@@ -52,7 +52,7 @@ public class RobotContainer {
   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
   private final CoralSubsystem m_coralSubSystem = new CoralSubsystem();
   private final AlgaeSubsystem m_algaeSubsystem = new AlgaeSubsystem();
-  private final ClimberSubsystem m_climberSubsystem = new ClimberSubsystem();
+ // private final ClimberSubsystem m_climberSubsystem = new ClimberSubsystem();
 
   //private final DriveSubsystem driveSubsystem = new DriveSubsystem();
 
@@ -93,12 +93,13 @@ public class RobotContainer {
 
     // register auto options to the shuffleboard           
     autoChooser.addOption("none", null);
-    autoChooser.addOption("Example Auto", "Example Path");
+    autoChooser.addOption("1Meter", "1Meter");
+    autoChooser.addOption("180", "180");
     //autoChooser.addOption("Routine2", "Routine2Path");
     //autoChooser.addOption("Routine3", "Routine3Path");
 
     // Creating a new shuffleboard tab and adding the autoChooser
-    Shuffleboard.getTab("PathPlanner Autonomous").add(autoChooser);
+    Shuffleboard.getTab("PathPlanner Autonomous").add(autoChooser).withWidget(BuiltInWidgets.kComboBoxChooser);
   }
 
   /**

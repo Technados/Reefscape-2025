@@ -42,10 +42,10 @@ public class ClimberSubsystem extends SubsystemBase {
 
   // Initialize arm SPARK. We will use MAXMotion position control for the arm, so we also need to
   // initialize the closed loop controller and encoder.
-  private SparkMax armMotor =
+  private SparkMax climbMotor =
       new SparkMax(CoralSubsystemConstants.kArmMotorCanId, MotorType.kBrushless);
-  private SparkClosedLoopController armController = armMotor.getClosedLoopController();
-  private RelativeEncoder armEncoder = armMotor.getEncoder();
+  private SparkClosedLoopController armController = climbMotor.getClosedLoopController();
+  private RelativeEncoder armEncoder = climbMotor.getEncoder();
 
   // Initialize intake SPARK. We will use open loop control for this so we don't need a closed loop
   // controller like above.
@@ -102,7 +102,7 @@ public class ClimberSubsystem extends SubsystemBase {
      * the SPARK loses power. This is useful for power cycles that may occur
      * mid-operation.
      */
-    armMotor.configure(
+    climbMotor.configure(
         Configs.CoralSubsystem.armConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
@@ -118,7 +118,7 @@ public class ClimberSubsystem extends SubsystemBase {
     armEncoder.setPosition(0);
 
     // Initialize simulation values
-    armMotorSim = new SparkMaxSim(armMotor, armMotorModel);
+    armMotorSim = new SparkMaxSim(climbMotor, armMotorModel);
   }
 
   /**
