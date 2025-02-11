@@ -108,7 +108,7 @@ public class DriveSubsystem extends SubsystemBase {
               (speeds, feedforwards) -> driveRobotRelative(speeds), // Drive robot
               new PPHolonomicDriveController( // Holonomic controller
                   new PIDConstants(3.5, 0.0, 0.11), // Translation PID
-                  new PIDConstants(1.0, 0.0, 0.0)  // Rotation PID
+                  new PIDConstants(13.0, 0.0, 0.4)  // Rotation PID
               ),
               config, // RobotConfig loaded from PathPlanner GUI
               () -> {
