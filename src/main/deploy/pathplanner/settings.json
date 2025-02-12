@@ -5,15 +5,17 @@
   "pathFolders": [
     "Left Cage",
     "Middle Cage",
+    "Test Paths",
     "Right Cage"
   ],
   "autoFolders": [
-    "New Folder",
-    "New New Folder",
-    "New New New Folder"
+    "Left Cage",
+    "Middle Cage",
+    "Test Autos",
+    "Right Cage"
   ],
-  "defaultMaxVel": 2.0,
-  "defaultMaxAccel": 1.0,
+  "defaultMaxVel": 3.0,
+  "defaultMaxAccel": 2.0,
   "defaultMaxAngVel": 540.0,
   "defaultMaxAngAccel": 540.0,
   "defaultNominalVoltage": 12.0,
