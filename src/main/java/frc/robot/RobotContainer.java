@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
@@ -52,7 +53,7 @@ public class RobotContainer {
   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
   private final CoralSubsystem m_coralSubSystem = new CoralSubsystem();
   private final AlgaeSubsystem m_algaeSubsystem = new AlgaeSubsystem();
- // private final ClimberSubsystem m_climberSubsystem = new ClimberSubsystem();
+  // private final ClimberSubsystem m_climberSubsystem = new ClimberSubsystem();
 
   //private final DriveSubsystem driveSubsystem = new DriveSubsystem();
 
@@ -95,6 +96,9 @@ public class RobotContainer {
     autoChooser.addOption("none", null);
     autoChooser.addOption("1Meter", "1Meter");
     autoChooser.addOption("180", "180");
+    autoChooser.addOption("Test Path", "Test Path");
+    autoChooser.addOption("MiddleCageBack", "MiddleCageBack");
+    autoChooser.addOption("BackMiddle", "BackMiddle");
     //autoChooser.addOption("Routine2", "Routine2Path");
     //autoChooser.addOption("Routine3", "Routine3Path");
 
