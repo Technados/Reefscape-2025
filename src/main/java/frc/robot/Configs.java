@@ -64,7 +64,7 @@ public final class Configs {
 
     static {
       // Configure basic settings of the arm motor
-      armConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(40).voltageCompensation(12);
+      armConfig.inverted(false).idleMode(IdleMode.kCoast).smartCurrentLimit(40).voltageCompensation(12);
 
       /*
        * Configure the closed loop controller. We want to make sure we set the
@@ -78,8 +78,8 @@ public final class Configs {
           .outputRange(-1, 1)
           .maxMotion
           // Set MAXMotion parameters for position control
-          .maxVelocity(2000)
-          .maxAcceleration(10000)
+          .maxVelocity(500)
+          .maxAcceleration(500)
           .allowedClosedLoopError(0.25);
 
       // Configure basic settings of the elevator motor

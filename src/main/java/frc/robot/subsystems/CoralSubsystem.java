@@ -28,6 +28,7 @@ import frc.robot.Constants.CoralSubsystemConstants.ArmSetpoints;
 import frc.robot.Constants.CoralSubsystemConstants.ElevatorSetpoints;
 import frc.robot.Constants.CoralSubsystemConstants.IntakeSetpoints;
 import frc.robot.Constants.SimulationRobotConstants;
+import edu.wpi.first.wpilibj.DigitalInput;
 
 public class CoralSubsystem extends SubsystemBase {
   /** Subsystem-wide setpoints */
@@ -48,8 +49,8 @@ public class CoralSubsystem extends SubsystemBase {
 
   // Initialize elevator SPARK. We will use MAXMotion position control for the elevator, so we also
   // need to initialize the closed loop controller and encoder.
-  private SparkFlex elevatorMotor =
-      new SparkFlex(CoralSubsystemConstants.kElevatorMotorCanId, MotorType.kBrushless);
+  private SparkMax elevatorMotor =
+      new SparkMax(CoralSubsystemConstants.kElevatorMotorCanId, MotorType.kBrushless);
   private SparkClosedLoopController elevatorClosedLoopController =
       elevatorMotor.getClosedLoopController();
   private RelativeEncoder elevatorEncoder = elevatorMotor.getEncoder();
@@ -66,8 +67,9 @@ public class CoralSubsystem extends SubsystemBase {
   private double elevatorCurrentTarget = ElevatorSetpoints.kFeederStation;
 
   // Simulation setup and variables
-  private DCMotor elevatorMotorModel = DCMotor.getNeoVortex(1);
-  private SparkFlexSim elevatorMotorSim;
+  private DigitalInput elevatorLimitSwitch = new DigitalInput(0);
+  private DCMotor elevatorMotorModel = DCMotor.getNEO(1);
+  private SparkMaxSim elevatorMotorSim;
   private SparkLimitSwitchSim elevatorLimitSwitchSim;
   private final ElevatorSim m_elevatorSim =
       new ElevatorSim(
@@ -147,7 +149,7 @@ public class CoralSubsystem extends SubsystemBase {
     elevatorEncoder.setPosition(0);
 
     // Initialize simulation values
-    elevatorMotorSim = new SparkFlexSim(elevatorMotor, elevatorMotorModel);
+    elevatorMotorSim = new SparkMaxSim(elevatorMotor, elevatorMotorModel);
     elevatorLimitSwitchSim = new SparkLimitSwitchSim(elevatorMotor, false);
     armMotorSim = new SparkMaxSim(armMotor, armMotorModel);
   }
@@ -165,12 +167,12 @@ public class CoralSubsystem extends SubsystemBase {
 
   /** Zero the elevator encoder when the limit switch is pressed. */
   private void zeroElevatorOnLimitSwitch() {
-    if (!wasResetByLimit && elevatorMotor.getReverseLimitSwitch().isPressed()) {
+    if (!wasResetByLimit && !elevatorLimitSwitch.get()) {
       // Zero the encoder only when the limit switch is switches from "unpressed" to "pressed" to
       // prevent constant zeroing while pressed
       elevatorEncoder.setPosition(0);
       wasResetByLimit = true;
-    } else if (!elevatorMotor.getReverseLimitSwitch().isPressed()) {
+    } else if (elevatorLimitSwitch.get()) {
       wasResetByLimit = false;
     }
   }
@@ -255,6 +257,7 @@ public class CoralSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Coral/Elevator/Target Position", elevatorCurrentTarget);
     SmartDashboard.putNumber("Coral/Elevator/Actual Position", elevatorEncoder.getPosition());
     SmartDashboard.putNumber("Coral/Intake/Applied Output", intakeMotor.getAppliedOutput());
+    SmartDashboard.putBoolean("Coral/Intake/Limit Switch", !elevatorLimitSwitch.get());
 
     // Update mechanism2d
     m_elevatorMech2d.setLength(

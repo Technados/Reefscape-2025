@@ -22,24 +22,24 @@ public final class Constants {
   
 
   public static final class CoralSubsystemConstants {
-    public static final int kElevatorMotorCanId = 9;
-    public static final int kArmMotorCanId = 10;
-    public static final int kIntakeMotorCanId = 11;
+    public static final int kElevatorMotorCanId = 10;
+    public static final int kArmMotorCanId = 11;
+    public static final int kIntakeMotorCanId = 9;
 
     public static final class ElevatorSetpoints {
       public static final int kFeederStation = 0;
       public static final int kLevel1 = 0;
       public static final int kLevel2 = 0;
       public static final int kLevel3 = 100;
-      public static final int kLevel4 = 150;
+      public static final int kLevel4 = 135;
     }
 
     public static final class ArmSetpoints {
-      public static final double kFeederStation = 33;
+      public static final double kFeederStation = -2;
       public static final double kLevel1 = 0;
-      public static final double kLevel2 = 2;
-      public static final double kLevel3 = 2;
-      public static final double kLevel4 = 19;
+      public static final double kLevel2 = 10;
+      public static final double kLevel3 = 25;
+      public static final double kLevel4 = 25;
     }
 
     public static final class IntakeSetpoints {
@@ -68,8 +68,8 @@ public final class Constants {
   public static final class DriveConstants {
     // Driving Parameters - Note that these are not the maximum capable speeds of
     // the robot, rather the allowed maximum speeds
-    public static final double kMaxSpeedMetersPerSecond = 4.8;
-    public static final double kMaxAngularSpeed = 2 * Math.PI; // radians per second
+    public static final double kMaxSpeedMetersPerSecond = 3;
+    public static final double kMaxAngularSpeed = 1.5 * Math.PI; // radians per second
 
     // Chassis configuration
     public static final double kTrackWidth = Units.inchesToMeters(23.5);
