@@ -78,9 +78,10 @@ public final class Configs {
           .outputRange(-1, 1)
           .maxMotion
           // Set MAXMotion parameters for position control
-          .maxVelocity(500)
-          .maxAcceleration(500)
-          .allowedClosedLoopError(0.25);
+          .maxVelocity(2000)
+          .maxAcceleration(2000)
+          .allowedClosedLoopError(0.15);
+        
 
       // Configure basic settings of the elevator motor
       elevatorConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(50).voltageCompensation(12);
@@ -117,8 +118,8 @@ public final class Configs {
   }
 
   public static final class AlgaeSubsystem {
-    public static final SparkMaxConfig intakeConfig = new SparkMaxConfig();
-    public static final SparkMaxConfig armConfig = new SparkMaxConfig();
+    public static final SparkFlexConfig intakeConfig = new SparkFlexConfig();
+    public static final SparkFlexConfig armConfig = new SparkFlexConfig();
 
     static {
       // Configure basic setting of the arm motor

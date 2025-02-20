@@ -57,14 +57,14 @@ public class CoralSubsystem extends SubsystemBase {
 
   // Initialize intake SPARK. We will use open loop control for this so we don't need a closed loop
   // controller like above.
-  private SparkMax intakeMotor =
-      new SparkMax(CoralSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
+  private SparkFlex intakeMotor =
+      new SparkFlex(CoralSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
 
   // Member variables for subsystem state management
   private boolean wasResetByButton = false;
   private boolean wasResetByLimit = false;
-  private double armCurrentTarget = ArmSetpoints.kFeederStation;
-  private double elevatorCurrentTarget = ElevatorSetpoints.kFeederStation;
+  private double armCurrentTarget = ArmSetpoints.kLevel1;
+  private double elevatorCurrentTarget = ElevatorSetpoints.kLevel1;
 
   // Simulation setup and variables
   private DigitalInput elevatorLimitSwitch = new DigitalInput(0);
@@ -154,6 +154,7 @@ public class CoralSubsystem extends SubsystemBase {
     armMotorSim = new SparkMaxSim(armMotor, armMotorModel);
   }
 
+
   /**
    * Drive the arm and elevator motors to their respective setpoints. This will use MAXMotion
    * position control which will allow for a smooth acceleration and deceleration to the mechanisms'
@@ -161,8 +162,13 @@ public class CoralSubsystem extends SubsystemBase {
    */
   private void moveToSetpoint() {
     armController.setReference(armCurrentTarget, ControlType.kMAXMotionPositionControl);
+    //armController.setFF(0.1, ControlType.kGravityFF);
+    //if statement below will ensure the arm moves to position BEFORE elevator moves - this will avoid colosion
+    // adjust 0.5 value below as needed to ensure collision is avoided
+    if (Math.abs(armEncoder.getPosition() - armCurrentTarget) < 0.5) {
     elevatorClosedLoopController.setReference(
         elevatorCurrentTarget, ControlType.kMAXMotionPositionControl);
+    }
   }
 
   /** Zero the elevator encoder when the limit switch is pressed. */
