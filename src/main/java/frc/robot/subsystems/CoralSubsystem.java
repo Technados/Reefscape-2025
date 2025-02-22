@@ -37,7 +37,8 @@ public class CoralSubsystem extends SubsystemBase {
     kLevel1,
     kLevel2,
     kLevel3,
-    kLevel4;
+    kLevel4,
+    kKnockBack;
   }
 
   // Initialize arm SPARK. We will use MAXMotion position control for the arm, so we also need to
@@ -229,6 +230,9 @@ public class CoralSubsystem extends SubsystemBase {
               armCurrentTarget = ArmSetpoints.kLevel4;
               elevatorCurrentTarget = ElevatorSetpoints.kLevel4;
               break;
+            case kKnockBack: // NEW CASE ADDED
+              armCurrentTarget = ArmSetpoints.kKnockBack;
+              break;
           }
         });
   }
@@ -248,8 +252,14 @@ public class CoralSubsystem extends SubsystemBase {
    */
   public Command reverseIntakeCommand() {
     return this.startEnd(
-        () -> this.setIntakePower(IntakeSetpoints.kReverse), () -> this.setIntakePower(0.0));
+        () -> this.setIntakePower(IntakeSetpoints.kReverse), () -> this.setIntakePower(0.0))
+        .withTimeout(1.0);
   }
+
+  public Command waitUntilIntakeSafe(double targetPostion) {
+    return this.run(() -> {})
+      .until(() -> Math.abs(armEncoder.getPosition() - targetPostion) <0.5 );
+  } 
 
   @Override
   public void periodic() {

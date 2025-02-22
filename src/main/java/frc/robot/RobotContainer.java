@@ -25,8 +25,10 @@ import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.AutoConstants;
+import frc.robot.Constants.CoralSubsystemConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
+import frc.robot.Constants.AlgaeSubsystemConstants.ArmSetpoints;
 import frc.robot.subsystems.AlgaeSubsystem;
 import frc.robot.subsystems.CoralSubsystem;
 import frc.robot.subsystems.CoralSubsystem.Setpoint;
@@ -57,8 +59,19 @@ public class RobotContainer {
 
   //private final DriveSubsystem driveSubsystem = new DriveSubsystem();
 
+  //Create Commands
+
+
   // create autoChooser
   private final SendableChooser<String> autoChooser = new SendableChooser<>();
+
+  // Commands for PathPlanner
+  private void registerPathPlannerCommands() {
+    NamedCommands.registerCommand("MoveArmToScoring", m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack));
+    NamedCommands.registerCommand("MoveArmToStow", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1));
+    NamedCommands.registerCommand("RunIntake", m_coralSubSystem.runIntakeCommand().withTimeout(1.0));
+    NamedCommands.registerCommand("ReverseIntake", m_coralSubSystem.reverseIntakeCommand().withTimeout(1.0));
+}
 
   // The driver's controller
   CommandXboxController m_driverController =
@@ -99,8 +112,7 @@ public class RobotContainer {
     autoChooser.addOption("Test Path", "Test Path");
     autoChooser.addOption("MiddleCageBack", "MiddleCageBack");
     autoChooser.addOption("BackMiddle", "BackMiddle");
-    //autoChooser.addOption("Routine2", "Routine2Path");
-    //autoChooser.addOption("Routine3", "Routine3Path");
+    
 
     // Creating a new shuffleboard tab and adding the autoChooser
     Shuffleboard.getTab("PathPlanner Autonomous").add(autoChooser).withWidget(BuiltInWidgets.kComboBoxChooser);
@@ -128,7 +140,7 @@ public class RobotContainer {
     // Left Bumper -> Run coral intake
     m_operatorController.leftBumper().whileTrue(m_coralSubSystem.runIntakeCommand());
     // Right Bumper -> Run coral intake in reverse
-    m_operatorController.rightBumper().whileTrue(m_coralSubSystem.reverseIntakeCommand());
+   // m_operatorController.rightBumper().whileTrue(m_coralSubSystem.reverseIntakeCommand());
     // B Button -> Elevator/Arm to human player position, set ball intake to stow
     // when idle
     m_operatorController.b().onTrue(m_coralSubSystem.setSetpointCommand(Setpoint.kFeederStation).alongWith(m_algaeSubsystem.stowCommand()));
@@ -145,15 +157,31 @@ public class RobotContainer {
     // Y Button -> Elevator/Arm to level 4 position
     m_operatorController.y().onTrue(m_coralSubSystem.setSetpointCommand(Setpoint.kLevel4));
 
-    // Right Trigger -> Run ball intake, set to leave out when idle
+    /**
+     * Right Trigger -> Run Coral Scoring Sequence
+     * Reverse intake runs for fixed duration (set in subsytem)
+     * Intake arm rotates back to safe position at same time intake runs reverse
+     * AFTER intake arm is at safe position, elevator returns to zero
+     */
     m_operatorController
-        .rightTrigger(OIConstants.kTriggerButtonThreshold)
-        .whileTrue(m_algaeSubsystem.runIntakeCommand());
+        .rightTrigger(OIConstants.kTriggerButtonThreshold).onTrue(m_coralSubSystem.reverseIntakeCommand()
+        .alongWith(new InstantCommand(() -> {
+            m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack).schedule();
+            }, m_coralSubSystem))
+                .andThen(
+                m_coralSubSystem.waitUntilIntakeSafe(CoralSubsystemConstants.ArmSetpoints.kKnockBack))
+                .andThen(
+                m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1)));
+
+    // Right Trigger -> Run ball intake, set to leave out when idle
+   // m_operatorController
+   //     .rightTrigger(OIConstants.kTriggerButtonThreshold)
+   //     .whileTrue(m_algaeSubsystem.runIntakeCommand());
 
     // Left Trigger -> Run ball intake in reverse, set to stow when idle
-    m_operatorController
-        .leftTrigger(OIConstants.kTriggerButtonThreshold)
-        .whileTrue(m_algaeSubsystem.reverseIntakeCommand());
+    //m_operatorController
+    //   .leftTrigger(OIConstants.kTriggerButtonThreshold)
+  // .whileTrue(m_algaeSubsystem.reverseIntakeCommand());
 
   }
 
