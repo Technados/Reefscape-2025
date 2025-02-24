@@ -4,6 +4,7 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.sim.SparkFlexSim;
 import com.revrobotics.sim.SparkLimitSwitchSim;
 import com.revrobotics.sim.SparkMaxSim;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -162,15 +163,34 @@ public class CoralSubsystem extends SubsystemBase {
    * setpoints.
    */
   private void moveToSetpoint() {
-    armController.setReference(armCurrentTarget, ControlType.kMAXMotionPositionControl);
-    //armController.setFF(0.1, ControlType.kGravityFF);
-    //if statement below will ensure the arm moves to position BEFORE elevator moves - this will avoid colosion
-    // adjust 0.5 value below as needed to ensure collision is avoided
-    if (Math.abs(armEncoder.getPosition() - armCurrentTarget) < 0.5) {
-    elevatorClosedLoopController.setReference(
-        elevatorCurrentTarget, ControlType.kMAXMotionPositionControl);
+    // Convert encoder position to real-world arm angle in degrees
+    double armAngleDegrees = armEncoder.getPosition() * CoralSubsystemConstants.kArmDegreesPerEncoderTick;
+    double armAngleRadians = Math.toRadians(armAngleDegrees);
+
+    // Calculate Gravity Feedforward (GravityFF)
+    double gravityFFValue = CoralSubsystemConstants.kGravityFF * Math.cos(armAngleRadians);
+
+    // Moving to a scoring position (elevator up, arm out)
+    if (armCurrentTarget > CoralSubsystemConstants.ArmSetpoints.kLevel1) {  
+        // Move arm first with Gravity Feedforward
+        armController.setReference(armCurrentTarget,ControlType.kMAXMotionPositionControl,ClosedLoopSlot.kSlot0,gravityFFValue);
+
+        // Wait for arm to reach position before moving elevator up
+        if (Math.abs(armEncoder.getPosition() - armCurrentTarget) < 0.5) {
+            elevatorClosedLoopController.setReference(elevatorCurrentTarget,ControlType.kMAXMotionPositionControl);
+        }
+      } 
+    // Returning from a scoring position (elevator down first, then arm)
+    else {
+        // Move elevator down first
+        elevatorClosedLoopController.setReference(elevatorCurrentTarget,ControlType.kMAXMotionPositionControl);
+
+        // Wait for elevator to lower before moving arm back
+        if (Math.abs(elevatorEncoder.getPosition() - elevatorCurrentTarget) < 2.0) { 
+            armController.setReference(armCurrentTarget,ControlType.kMAXMotionPositionControl,ClosedLoopSlot.kSlot0,gravityFFValue);
+        }
     }
-  }
+}
 
   /** Zero the elevator encoder when the limit switch is pressed. */
   private void zeroElevatorOnLimitSwitch() {
@@ -241,19 +261,19 @@ public class CoralSubsystem extends SubsystemBase {
    * Command to run the intake motor. When the command is interrupted, e.g. the button is released,
    * the motor will stop.
    */
-  public Command runIntakeCommand() {
+  public Command reverseIntakeCommand() {
     return this.startEnd(
-        () -> this.setIntakePower(IntakeSetpoints.kForward), () -> this.setIntakePower(0.0));
+        () -> this.setIntakePower(IntakeSetpoints.kReverse), () -> this.setIntakePower(0.0))
+        .withTimeout(1.0);
   }
 
   /**
    * Command to reverses the intake motor. When the command is interrupted, e.g. the button is
    * released, the motor will stop.
    */
-  public Command reverseIntakeCommand() {
+  public Command runIntakeCommand() {
     return this.startEnd(
-        () -> this.setIntakePower(IntakeSetpoints.kReverse), () -> this.setIntakePower(0.0))
-        .withTimeout(1.0);
+        () -> this.setIntakePower(IntakeSetpoints.kForward), () -> this.setIntakePower(0.0));    
   }
 
   public Command waitUntilIntakeSafe(double targetPostion) {

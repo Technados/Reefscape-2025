@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -26,18 +27,25 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import frc.robot.Constants;
 import frc.robot.Constants.CoralSubsystemConstants.IntakeSetpoints;
 import frc.robot.Constants.DriveConstants;
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class DriveSubsystem extends SubsystemBase {
 
-
   private static final double ALIGN_THRESHOLD = 1.0;
-  private static final double ALIGN_SPEED = 0.2;
+  private static final double RANGE_THRESHOLD = 2.0; 
+
+  private final PIDController limelightTurnPID = new PIDController(0.02, 0.0, 0.002); // TX correction
+  private final PIDController limelightDistancePID = new PIDController(0.05, 0.0, 0.01); // TY correction
+  
+
+  private final NetworkTable limelight = NetworkTableInstance.getDefault().getTable("limelight");
   public enum Alignment {
     LEFT,
-    RIGHT
+    RIGHT,
+    CENTER
+    
 }
-
 
   // Create MAXSwerveModules
   private final MAXSwerveModule m_frontLeft =
@@ -89,6 +97,11 @@ public class DriveSubsystem extends SubsystemBase {
       private RobotConfig config;
 
       public DriveSubsystem() {
+
+          // set limelight alignment tolerance
+          limelightTurnPID.setTolerance(ALIGN_THRESHOLD);
+          limelightDistancePID.setTolerance(RANGE_THRESHOLD);
+
           // Load RobotConfig
           try {
               config = RobotConfig.fromGUISettings();
@@ -235,32 +248,74 @@ public ChassisSpeeds getChassisSpeeds() {
           m_rearRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
         });
   }
+  
 
-  /**
-   * Aligns the robot to the target using the limelight.
-   *
-   * @param alignment The alignment to use.
-   */
-  public void alignToTarget(Alignment alignment) {
-    double tx = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0.0);
-    double ty = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0.0);
+/**
+     * Align to the reef for scoring or algae removal.
+     */
+    public void alignToReef(Alignment alignment) {
+      limelight.getEntry("pipeline").setNumber(0); // Reef scoring pipeline
 
-    double offset = alignment == Alignment.LEFT ? -5.0 : 5.0;
-    double targetTx = tx + offset;
+      double tx = limelight.getEntry("tx").getDouble(0.0);
+      double ty = limelight.getEntry("ty").getDouble(0.0);
 
-    if (Math.abs(targetTx) > ALIGN_THRESHOLD) {
-        double rotation = Math.copySign(ALIGN_SPEED, targetTx);
-        drive(0, 0, rotation, false);
-    } else if (Math.abs(ty) > ALIGN_THRESHOLD) {
-        drive(0.2, 0, 0, false);
-    } else {
-        drive(0, 0, 0, false);
-    }
+      double offset = 0.0;
+      if (alignment == Alignment.LEFT) {
+          offset = -5.0;
+      } else if (alignment == Alignment.RIGHT) {
+          offset = 5.0;
+      } 
+
+      double turnPower = limelightTurnPID.calculate(tx, offset);
+      double drivePower = limelightDistancePID.calculate(ty, Constants.DesiredDistances.REEF_SCORING);
+
+      // Drive correction
+      if (!limelightTurnPID.atSetpoint()) {
+          drive(0, 0, turnPower, false);
+      } else if (!limelightDistancePID.atSetpoint()) {
+          drive(drivePower, 0, 0, false);
+      } else {
+          drive(0, 0, 0, false);
+      }
   }
 
-  public Command alignToTargetCommand(Alignment alignment) {
-    return new RunCommand(() -> alignToTarget(alignment), this);
-}
+  public Command alignToReefCommand(Alignment alignment) {
+      return new RunCommand(() -> alignToReef(alignment), this);
+  }
+
+  /**
+   * Align to the correct substation (left or right) for retrieving a game piece.
+   */
+  public void alignToSubstation() {
+      int tagID = (int) limelight.getEntry("tid").getDouble(-1); // Get detected AprilTag ID
+
+      // Determine which pipeline to use
+      if (tagID == 6 || tagID == 19) {
+          limelight.getEntry("pipeline").setNumber(1); // Left Substation Pipeline
+      } else if (tagID == 17 || tagID == 8) {
+          limelight.getEntry("pipeline").setNumber(2); // Right Substation Pipeline
+      } else {
+          return; // No valid tag detected
+      }
+
+      double tx = limelight.getEntry("tx").getDouble(0.0);
+      double ty = limelight.getEntry("ty").getDouble(0.0);
+
+      double turnPower = limelightTurnPID.calculate(tx, 0);
+      double drivePower = limelightDistancePID.calculate(ty, Constants.DesiredDistances.SUBSTATION_PICKUP);
+
+      if (!limelightTurnPID.atSetpoint()) {
+          drive(0, 0, turnPower, false);
+      } else if (!limelightDistancePID.atSetpoint()) {
+          drive(drivePower, 0, 0, false);
+      } else {
+          drive(0, 0, 0, false);
+      }
+  }
+
+  public Command alignToSubstationCommand() {
+      return new RunCommand(this::alignToSubstation, this);
+  }
 
 
   /**

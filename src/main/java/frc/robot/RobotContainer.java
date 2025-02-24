@@ -129,14 +129,17 @@ public class RobotContainer {
     // Driver Controller
     // Left Stick Button -> Set swerve to X
     m_driverController.leftStick().whileTrue(m_robotDrive.setXCommand());
-    // left and right bumpers determine which direction of the april tag to shift to for reef scoring position
-    m_driverController.leftBumper().whileTrue(m_robotDrive.alignToTargetCommand(Alignment.LEFT));
-    m_driverController.rightBumper().whileTrue(m_robotDrive.alignToTargetCommand(Alignment.RIGHT));
+
     // Start Button -> Zero swerve heading
     m_driverController.start().onTrue(m_robotDrive.zeroHeadingCommand());
     
 
     // Operator Controller
+    // Reef Scoring Alignments - d-pad aligns left, right, or center to reef sides using apriltag
+    m_operatorController.povLeft().whileTrue(m_robotDrive.alignToReefCommand(Alignment.LEFT));
+    m_operatorController.povRight().whileTrue(m_robotDrive.alignToReefCommand(Alignment.RIGHT));
+    m_operatorController.povUp().whileTrue(m_robotDrive.alignToReefCommand(Alignment.CENTER));
+
     // Left Bumper -> Run coral intake
     m_operatorController.leftBumper().whileTrue(m_coralSubSystem.runIntakeCommand());
     // Right Bumper -> Run coral intake in reverse
@@ -164,14 +167,13 @@ public class RobotContainer {
      * AFTER intake arm is at safe position, elevator returns to zero
      */
     m_operatorController
-        .rightTrigger(OIConstants.kTriggerButtonThreshold).onTrue(m_coralSubSystem.reverseIntakeCommand()
-        .alongWith(new InstantCommand(() -> {
-            m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack).schedule();
-            }, m_coralSubSystem))
-                .andThen(
-                m_coralSubSystem.waitUntilIntakeSafe(CoralSubsystemConstants.ArmSetpoints.kKnockBack))
-                .andThen(
-                m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1)));
+    .rightTrigger(OIConstants.kTriggerButtonThreshold).onTrue(
+        m_coralSubSystem.reverseIntakeCommand()
+        .andThen(() -> m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack).schedule()) // Move intake to KnockBack
+        .andThen(m_coralSubSystem.waitUntilIntakeSafe(CoralSubsystemConstants.ArmSetpoints.kKnockBack)) // Wait for safe position
+        .andThen(() -> m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1).schedule()) // Lower Elevator first
+    );
+
 
     // Right Trigger -> Run ball intake, set to leave out when idle
    // m_operatorController

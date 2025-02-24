@@ -27,7 +27,7 @@ public final class Constants {
     public static final int kIntakeMotorCanId = 9;
 
     public static final class ElevatorSetpoints {
-      public static final int kFeederStation = 0;
+      public static final int kFeederStation = 10;
       public static final int kLevel1 = 0;
       public static final int kLevel2 = 0;
       public static final int kLevel3 = 40;
@@ -40,7 +40,7 @@ public final class Constants {
       public static final double kLevel2 = 15.5;
       public static final double kLevel3 = 17.5;
       public static final double kLevel4 = 19.5;
-      public static final double kKnockBack = 20.5;
+      public static final double kKnockBack = 20;
     }
 
     public static final class IntakeSetpoints {
@@ -60,17 +60,22 @@ public final class Constants {
     }
 
     public static final class IntakeSetpoints {
-      public static final double kForward = 0.5;
-      public static final double kReverse = -0.5;
+      public static final double kForward = -0.5;
+      public static final double kReverse = 0.5;
       public static final double kHold = 0.25;
     }
   }
 
+  public static final class DesiredDistances {
+    public static final double REEF_SCORING = 5.0; // Adjust based on real-world testing
+    public static final double SUBSTATION_PICKUP = 6.0; // Adjust based on real-world testing
+}
+
   public static final class DriveConstants {
     // Driving Parameters - Note that these are not the maximum capable speeds of
     // the robot, rather the allowed maximum speeds
-    public static final double kMaxSpeedMetersPerSecond = 3;
-    public static final double kMaxAngularSpeed = 1.5 * Math.PI; // radians per second
+    public static final double kMaxSpeedMetersPerSecond = 1;
+    public static final double kMaxAngularSpeed = 1 * Math.PI; // radians per second
 
     // Chassis configuration
     public static final double kTrackWidth = Units.inchesToMeters(23.5);
@@ -101,7 +106,7 @@ public final class Constants {
     public static final int kFrontRightTurningCanId = 6;
     public static final int kRearRightTurningCanId = 8;
 
-    public static final boolean kGyroReversed = false;
+    public static final boolean kGyroReversed = true;
   }
 
   public static final class ModuleConstants {
