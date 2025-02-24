@@ -14,8 +14,13 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.shuffleboard.WidgetType;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -120,6 +125,30 @@ public class CoralSubsystem extends SubsystemBase {
               SimulationRobotConstants.kArmLength * SimulationRobotConstants.kPixelsPerMeter,
               180 - Units.radiansToDegrees(SimulationRobotConstants.kMinAngleRads) - 90));
 
+
+   // Display subsystem values
+    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Arm/Target Position", armCurrentTarget);
+    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Arm/Actual Position", armEncoder.getPosition());
+    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Elevator/Target Position", elevatorCurrentTarget);
+    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Elevator/Actual Position", elevatorEncoder.getPosition());
+    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Intake/Applied Output", intakeMotor.getAppliedOutput());
+    // SmartDashboard.putBoolean("SmartDashboard/Coral Subsystem/Coral/Intake/Limit Switch", !elevatorLimitSwitch.get());
+
+
+
+  // Coral Tab / Entries
+  private ShuffleboardTab coralTab = Shuffleboard.getTab("Coral Subsystem");
+  private GenericEntry armTargetPosEntry = coralTab.add("Arm Target Position", 0).withWidget(BuiltInWidgets.kTextView).getEntry();
+  private GenericEntry armActualPosEntry = coralTab.add("Arm Actual Position", 0).withWidget(BuiltInWidgets.kTextView).getEntry();
+  private GenericEntry elevatorTargetPosEntry = coralTab.add("Elevator Target Position", 0).withWidget(BuiltInWidgets.kTextView).getEntry();
+  private GenericEntry elevatorActualPosEntry = coralTab.add("Elevator Actual Position", 0).withWidget(BuiltInWidgets.kTextView).getEntry();
+  private GenericEntry intakeAppliedOutputEntry = coralTab.add("Intake Applied Output", 0).withWidget(BuiltInWidgets.kTextView).getEntry();
+  private GenericEntry intakeLimitSwitchEntry = coralTab.add("Intake Limit Switch", 0).withWidget(BuiltInWidgets.kBooleanBox).getEntry();
+
+
+
+
+
   public CoralSubsystem() {
     /*
      * Apply the appropriate configurations to the SPARKs.
@@ -145,7 +174,8 @@ public class CoralSubsystem extends SubsystemBase {
         PersistMode.kPersistParameters);
 
     // Display mechanism2d
-    SmartDashboard.putData("Coral Subsystem", m_mech2d);
+    //Shuffleboard.getTab("Coral Subsystem").add(m_mech2d);
+    SmartDashboard.putData("SmartDashboard/Coral Subsystem", m_mech2d);
 
     // Zero arm and elevator encoders on initialization
     armEncoder.setPosition(0);
@@ -253,6 +283,7 @@ public class CoralSubsystem extends SubsystemBase {
               break;
             case kKnockBack: // NEW CASE ADDED
               armCurrentTarget = ArmSetpoints.kKnockBack;
+              elevatorCurrentTarget = ElevatorSetpoints.kLevel1;
               break;
           }
         });
@@ -288,13 +319,29 @@ public class CoralSubsystem extends SubsystemBase {
     zeroElevatorOnLimitSwitch();
     zeroOnUserButton();
 
+    
+
+
     // Display subsystem values
-    SmartDashboard.putNumber("Coral/Arm/Target Position", armCurrentTarget);
-    SmartDashboard.putNumber("Coral/Arm/Actual Position", armEncoder.getPosition());
-    SmartDashboard.putNumber("Coral/Elevator/Target Position", elevatorCurrentTarget);
-    SmartDashboard.putNumber("Coral/Elevator/Actual Position", elevatorEncoder.getPosition());
-    SmartDashboard.putNumber("Coral/Intake/Applied Output", intakeMotor.getAppliedOutput());
-    SmartDashboard.putBoolean("Coral/Intake/Limit Switch", !elevatorLimitSwitch.get());
+    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Arm/Target Position", armCurrentTarget);
+    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Arm/Actual Position", armEncoder.getPosition());
+    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Elevator/Target Position", elevatorCurrentTarget);
+    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Elevator/Actual Position", elevatorEncoder.getPosition());
+    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Intake/Applied Output", intakeMotor.getAppliedOutput());
+    // SmartDashboard.putBoolean("SmartDashboard/Coral Subsystem/Coral/Intake/Limit Switch", !elevatorLimitSwitch.get());
+
+
+    // Display subsystem values
+    armTargetPosEntry.setDouble(armCurrentTarget);
+    armActualPosEntry.setDouble(armEncoder.getPosition());
+    elevatorTargetPosEntry.setDouble(elevatorCurrentTarget);
+    elevatorActualPosEntry.setDouble(elevatorEncoder.getPosition());
+    intakeAppliedOutputEntry.setDouble(intakeMotor.getAppliedOutput());
+    intakeLimitSwitchEntry.setBoolean(!elevatorLimitSwitch.get());
+    
+    
+
+
 
     // Update mechanism2d
     m_elevatorMech2d.setLength(

@@ -265,6 +265,9 @@ public ChassisSpeeds getChassisSpeeds() {
       } else if (alignment == Alignment.RIGHT) {
           offset = 5.0;
       } 
+        else if (alignment == Alignment.CENTER) {
+          offset = 0.0;
+      } 
 
       double turnPower = limelightTurnPID.calculate(tx, offset);
       double drivePower = limelightDistancePID.calculate(ty, Constants.DesiredDistances.REEF_SCORING);

@@ -71,8 +71,8 @@ public final class Constants {
   }
 
   public static final class DesiredDistances {
-    public static final double REEF_SCORING = 0.0; // Adjust based on real-world testing
-    public static final double SUBSTATION_PICKUP = 6.0; // Adjust based on real-world testing
+    public static final double REEF_SCORING = 2.0; // Adjust based on real-world testing
+    public static final double SUBSTATION_PICKUP = 10.0; // Adjust based on real-world testing
 }
 
   public static final class DriveConstants {
