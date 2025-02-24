@@ -15,6 +15,7 @@ import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -276,9 +277,9 @@ public class CoralSubsystem extends SubsystemBase {
         () -> this.setIntakePower(IntakeSetpoints.kForward), () -> this.setIntakePower(0.0));    
   }
 
-  public Command waitUntilIntakeSafe(double targetPostion) {
+  public Command waitUntilIntakeSafe(double armCurrentTarget) {
     return this.run(() -> {})
-      .until(() -> Math.abs(armEncoder.getPosition() - targetPostion) <0.5 );
+      .until(() -> Math.abs(armEncoder.getPosition() - armCurrentTarget) <0.5 );
   } 
 
   @Override

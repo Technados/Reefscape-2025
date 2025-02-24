@@ -170,7 +170,7 @@ public class RobotContainer {
     .rightTrigger(OIConstants.kTriggerButtonThreshold).onTrue(
         m_coralSubSystem.reverseIntakeCommand()
         .andThen(() -> m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack).schedule()) // Move intake to KnockBack
-        .andThen(m_coralSubSystem.waitUntilIntakeSafe(CoralSubsystemConstants.ArmSetpoints.kKnockBack)) // Wait for safe position
+        //.andThen(m_coralSubSystem.waitUntilIntakeSafe(CoralSubsystemConstants.ArmSetpoints.kKnockBack)) // Wait for safe position
         .andThen(() -> m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1).schedule()) // Lower Elevator first
     );
 

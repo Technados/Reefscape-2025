@@ -43,10 +43,14 @@ public final class Constants {
       public static final double kKnockBack = 20;
     }
 
+    public static final double kArmDegreesPerEncoderTick = 0.01964; // based on 20:1 planetary AND a 22t --> 48t chain reduction
+
     public static final class IntakeSetpoints {
-      public static final double kForward = 0.5;
-      public static final double kReverse = -0.5;
+      public static final double kForward = -0.5;
+      public static final double kReverse = 0.5;
     }
+
+    public static final double kGravityFF = 0.15; //adjust after testing
   }
 
   public static final class AlgaeSubsystemConstants {
@@ -60,14 +64,14 @@ public final class Constants {
     }
 
     public static final class IntakeSetpoints {
-      public static final double kForward = -0.5;
-      public static final double kReverse = 0.5;
+      public static final double kForward = 0.5;
+      public static final double kReverse = -0.5;
       public static final double kHold = 0.25;
     }
   }
 
   public static final class DesiredDistances {
-    public static final double REEF_SCORING = 5.0; // Adjust based on real-world testing
+    public static final double REEF_SCORING = 0.0; // Adjust based on real-world testing
     public static final double SUBSTATION_PICKUP = 6.0; // Adjust based on real-world testing
 }
 
