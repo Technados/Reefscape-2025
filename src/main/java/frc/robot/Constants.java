@@ -70,10 +70,46 @@ public final class Constants {
     }
   }
 
-  public static final class DesiredDistances {
-    public static final double REEF_SCORING = 2.0; // Adjust based on real-world testing
-    public static final double SUBSTATION_PICKUP = 10.0; // Adjust based on real-world testing
+  public static final class AprilTagIDs {
+    // 🚨 Reef AprilTag IDs (Red Alliance Perspective, Counter-Clockwise, Faces A --> F)
+    public static final int A = 7;
+    public static final int B = 8;
+    public static final int C = 9;
+    public static final int D = 10;
+    public static final int E = 11;
+    public static final int F = 6;
+
+    // 🚨 Substation AprilTag IDs
+    public static final int LEFT_SUBSTATION_RED = 6;
+    public static final int RIGHT_SUBSTATION_RED = 8;
+    public static final int LEFT_SUBSTATION_BLUE = 19;
+    public static final int RIGHT_SUBSTATION_BLUE = 17;
+
 }
+    // Desired distances for alignment (to be fine-tuned)
+    public static final class DesiredDistances {
+      public static final double REEF_SCORING = 2.0; // Close to reef
+      public static final double SUBSTATION_PICKUP = 10.0; // ~15ft from reef
+  }
+          // Substation Heading Angles (from driver station perspective)
+          public static final double LEFT_SUBSTATION_ANGLE = 125.0;
+          public static final double RIGHT_SUBSTATION_ANGLE = 235.0;
+
+public static final class LimelightPID {
+  // 🎯 PID Gains for Reef Targeting
+  public static final double kP_turn = 0.02;  // Adjust as needed
+  public static final double kI_turn = 0.0;
+  public static final double kD_turn = 0.001;
+
+  public static final double kP_distance = 0.05;  // Adjust as needed
+  public static final double kI_distance = 0.0;
+  public static final double kD_distance = 0.002;
+
+  public static final double kP_strafe = 0.03;  // 🎯 PID for left/right strafing (Adjust as needed)
+  public static final double kI_strafe = 0.0;
+  public static final double kD_strafe = 0.002;
+}
+
 
   public static final class DriveConstants {
     // Driving Parameters - Note that these are not the maximum capable speeds of
@@ -110,7 +146,7 @@ public final class Constants {
     public static final int kFrontRightTurningCanId = 6;
     public static final int kRearRightTurningCanId = 8;
 
-    public static final boolean kGyroReversed = true;
+    public static final boolean kGyroReversed = false;
   }
 
   public static final class ModuleConstants {
