@@ -35,17 +35,16 @@ public class DriveSubsystem extends SubsystemBase {
 
   private static final double ALIGN_THRESHOLD = 1.0;
   private static final double RANGE_THRESHOLD = 2.0; 
-
-  // 🎯 Strafe PID Controller (for left/right alignment with reef face)
-private final PIDController limelightStrafePID = new PIDController(
-  Constants.LimelightPID.kP_strafe, 
-  Constants.LimelightPID.kI_strafe, 
-  Constants.LimelightPID.kD_strafe
-);
-private final PIDController limelightTurnPID = new PIDController(
+  private final PIDController limelightTurnPID = new PIDController(
     Constants.LimelightPID.kP_turn, 
     Constants.LimelightPID.kI_turn, 
     Constants.LimelightPID.kD_turn
+);
+
+private final PIDController limelightStrafePID = new PIDController(
+    Constants.LimelightPID.kP_strafe, 
+    Constants.LimelightPID.kI_strafe, 
+    Constants.LimelightPID.kD_strafe
 );
 
 private final PIDController limelightDistancePID = new PIDController(
@@ -54,16 +53,15 @@ private final PIDController limelightDistancePID = new PIDController(
     Constants.LimelightPID.kD_distance
 );
 
+private final NetworkTable limelight = NetworkTableInstance.getDefault().getTable("limelight");
+private final AHRS m_gyro = new AHRS(SerialPort.Port.kUSB);
 
-  
-
-  private final NetworkTable limelight = NetworkTableInstance.getDefault().getTable("limelight");
-  public enum Alignment {
+public enum Alignment {
     LEFT,
     RIGHT,
     CENTER
-    
 }
+    
 
   // Create MAXSwerveModules
   private final MAXSwerveModule m_frontLeft =
@@ -95,7 +93,7 @@ private final PIDController limelightDistancePID = new PIDController(
   // Next line is gyro setup for NavX-2 Micro gyro from Kauai Labs
   //// Additional change: since using NavX-2 gyro, all getAngle calls in the drive
   // sub system had to be chnaged to negative values
-  private final AHRS m_gyro = new AHRS(SerialPort.Port.kUSB);
+  //private final AHRS m_gyro = new AHRS(SerialPort.Port.kUSB);
     // The NavX gyro is used to track the robot's orientation on the field.
 
 
@@ -103,7 +101,7 @@ private final PIDController limelightDistancePID = new PIDController(
   SwerveDriveOdometry m_odometry =
       new SwerveDriveOdometry(
           DriveConstants.kDriveKinematics,
-          Rotation2d.fromDegrees(-m_gyro.getAngle()),
+          Rotation2d.fromDegrees(m_gyro.getAngle()),
           new SwerveModulePosition[] {
             m_frontLeft.getPosition(),
             m_frontRight.getPosition(),
@@ -115,10 +113,9 @@ private final PIDController limelightDistancePID = new PIDController(
       private RobotConfig config;
 
       public DriveSubsystem() {
-
-          // set limelight alignment tolerance
-          limelightTurnPID.setTolerance(ALIGN_THRESHOLD);
-          limelightDistancePID.setTolerance(RANGE_THRESHOLD);
+                  // set limelight alignment tolerance
+                  limelightTurnPID.setTolerance(ALIGN_THRESHOLD);
+                  limelightDistancePID.setTolerance(RANGE_THRESHOLD);
 
           // Load RobotConfig
           try {
@@ -163,7 +160,7 @@ private final PIDController limelightDistancePID = new PIDController(
     
     // Update the odometry in the periodic block
     m_odometry.update(
-        Rotation2d.fromDegrees(-m_gyro.getAngle()),
+        Rotation2d.fromDegrees(m_gyro.getAngle()),
         new SwerveModulePosition[] {
           m_frontLeft.getPosition(),
           m_frontRight.getPosition(),
@@ -188,7 +185,7 @@ private final PIDController limelightDistancePID = new PIDController(
    */
   public void resetOdometry(Pose2d pose) {
     m_odometry.resetPosition(
-        Rotation2d.fromDegrees(-m_gyro.getAngle()),
+        Rotation2d.fromDegrees(m_gyro.getAngle()),
         new SwerveModulePosition[] {
           m_frontLeft.getPosition(),
           m_frontRight.getPosition(),
@@ -221,7 +218,7 @@ private final PIDController limelightDistancePID = new PIDController(
                     xSpeedDelivered,
                     ySpeedDelivered,
                     rotDelivered,
-                    Rotation2d.fromDegrees(-m_gyro.getAngle()))
+                    Rotation2d.fromDegrees(m_gyro.getAngle()))
                 : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered));
     SwerveDriveKinematics.desaturateWheelSpeeds(
         swerveModuleStates, DriveConstants.kMaxSpeedMetersPerSecond);
@@ -266,97 +263,99 @@ public ChassisSpeeds getChassisSpeeds() {
           m_rearRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
         });
   }
+  public void stopMovement() {
+    drive(0, 0, 0, true); // Stop all movement
+}
   
 
 /**
      * Align to the reef for scoring or algae removal.
      */
     public void alignToReef(Alignment alignment) {
-    limelight.getEntry("pipeline").setNumber(0); // Use Reef Scoring Pipeline
+      limelight.getEntry("pipeline").setNumber(0); // Reef Scoring Pipeline
 
-    double tx = limelight.getEntry("tx").getDouble(0.0);
-    double ty = limelight.getEntry("ty").getDouble(0.0);
-    double ta = limelight.getEntry("ta").getDouble(0.0);
-    int tagID = (int) limelight.getEntry("tid").getDouble(-1);
+      double tx = limelight.getEntry("tx").getDouble(0.0);
+      double ty = limelight.getEntry("ty").getDouble(0.0);
+      int tagID = (int) limelight.getEntry("tid").getDouble(-1);
 
-    double targetHeading = 0.0;
-    double strafeOffset = 0.0;
+      double targetHeading = getReefHeading(tagID);
+      if (targetHeading == Double.NaN) return; // No valid tag detected
 
-    // 🎯 Reef Face Headings based on AprilTag ID
-    switch (tagID) {
-        case AprilTagIDs.A: targetHeading = 0.0; break;   // ID 7
-        case AprilTagIDs.B: targetHeading = 60.0; break;   // ID 8
-        case AprilTagIDs.C: targetHeading = 120.0; break; // ID 9
-        case AprilTagIDs.D: targetHeading = 180.0; break;  // ID 10
-        case AprilTagIDs.E: targetHeading = -120.0; break; // ID 11
-        case AprilTagIDs.F: targetHeading = -60.0; break; // ID 6
-        default: return; // No valid tag detected
-    }
+      double strafeOffset = getStrafeOffset(alignment);
+      double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
+      // Apply a deadband to prevent constant micro-adjustments
+if (Math.abs(targetHeading - getHeading()) < 1.5) { // If within 1.5 degrees, stop rotating
+  turnPower = 0;
 
-    // Adjust for Left/Right Scoring Positions
-    if (alignment == Alignment.LEFT) {
-        strafeOffset = -0.2;  // Shift left ~6 inches
-    } else if (alignment == Alignment.RIGHT) {
-        strafeOffset = 0.2;   // Shift right ~6 inches
-    } else {
-        strafeOffset = 0.0;   // Center Alignment for Algae Removal
-    }
 
-    // 🎯 PID Control for Alignment
-    double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
-    double drivePower = limelightDistancePID.calculate(ty, Constants.DesiredDistances.REEF_SCORING);
-    double strafePower = limelightStrafePID.calculate(tx, strafeOffset);
-
-    // 🎯 Execute Alignment in Sequence: Turn → Strafe → Drive
-    if (!limelightTurnPID.atSetpoint()) {
-        drive(0, 0, turnPower, false);
-    } else if (!limelightStrafePID.atSetpoint()) {
-        drive(0, strafePower, 0, false);
-    } else if (!limelightDistancePID.atSetpoint()) {
-        drive(drivePower, 0, 0, false);
-    } else {
-        drive(0, 0, 0, false);
-    }
 }
-public Command alignToReefCommand(Alignment alignment) {
-  return new RunCommand(() -> alignToReef(alignment), this);
-}
+      double strafePower = limelightStrafePID.calculate(tx, strafeOffset);
+      double drivePower = limelightDistancePID.calculate(ty, Constants.DesiredDistances.REEF_SCORING);
 
-/**
-   * Align to the correct substation (left or right) for retrieving a game piece.
-   */
+      if (!limelightTurnPID.atSetpoint()) {
+          drive(0, 0, turnPower, false);
+      } else if (!limelightStrafePID.atSetpoint()) {
+          drive(0, strafePower, 0, false);
+      } else if (!limelightDistancePID.atSetpoint()) {
+          drive(drivePower, 0, 0, false);
+      } else {
+          drive(0, 0, 0, false);
+      }
+  }
+
+  private double getReefHeading(int tagID) {
+      switch (tagID) {
+          case AprilTagIDs.A: return 0.0;
+          case AprilTagIDs.B: return 60.0;
+          case AprilTagIDs.C: return 120.0;
+          case AprilTagIDs.D: return 180.0;
+          case AprilTagIDs.E: return -120.0;
+          case AprilTagIDs.F: return -60.0;
+          case AprilTagIDs.BLUE_A: return 0.0;
+          case AprilTagIDs.BLUE_B: return 60.0;
+          case AprilTagIDs.BLUE_C: return 120.0;
+          case AprilTagIDs.BLUE_D: return 180.0;
+          case AprilTagIDs.BLUE_E: return -120.0;
+          case AprilTagIDs.BLUE_F: return -60.0;
+          default: return Double.NaN;
+      }
+  }
+
+  private double getStrafeOffset(Alignment alignment) {
+      switch (alignment) {
+          case LEFT: return -0.2;
+          case RIGHT: return 0.2;
+          default: return 0.0;
+      }
+  }
+
   public void alignToSubstation() {
-    int tagID = (int) limelight.getEntry("tid").getDouble(-1); // Get detected AprilTag ID
+      int tagID = (int) limelight.getEntry("tid").getDouble(-1);
+      double targetHeading = (tagID == 6 || tagID == 19) ? 125.0 : (tagID == 17 || tagID == 8) ? -125.0 : Double.NaN;
+      if (targetHeading == Double.NaN) return;
 
-    // Determine which pipeline to use
-    if (tagID == 6 || tagID == 19) {
-        limelight.getEntry("pipeline").setNumber(1); // Left Substation Pipeline
-    } else if (tagID == 17 || tagID == 8) {
-        limelight.getEntry("pipeline").setNumber(2); // Right Substation Pipeline
-    } else {
-        return; // No valid tag detected
-    }
+      double tx = limelight.getEntry("tx").getDouble(0.0);
+      double ty = limelight.getEntry("ty").getDouble(0.0);
 
-    double tx = limelight.getEntry("tx").getDouble(0.0);
-    double ty = limelight.getEntry("ty").getDouble(0.0);
+      double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
+      double drivePower = limelightDistancePID.calculate(ty, Constants.DesiredDistances.SUBSTATION_PICKUP);
 
-    double turnPower = limelightTurnPID.calculate(tx, 0);
-    double drivePower = limelightDistancePID.calculate(ty, Constants.DesiredDistances.SUBSTATION_PICKUP);
+      if (!limelightTurnPID.atSetpoint()) {
+          drive(0, 0, turnPower, false);
+      } else if (!limelightDistancePID.atSetpoint()) {
+          drive(drivePower, 0, 0, false);
+      } else {
+          drive(0, 0, 0, false);
+      }
+  }
 
-    if (!limelightTurnPID.atSetpoint()) {
-        drive(0, 0, turnPower, false);
-    } else if (!limelightDistancePID.atSetpoint()) {
-        drive(drivePower, 0, 0, false);
-    } else {
-        drive(0, 0, 0, false);
-    }
-}
+  public Command alignToReefCommand(Alignment alignment) {
+      return new RunCommand(() -> alignToReef(alignment), this);
+  }
 
-public Command alignToSubstationCommand() {
-    return new RunCommand(this::alignToSubstation, this);
-}
-
-
+  public Command alignToSubstationCommand() {
+      return new RunCommand(this::alignToSubstation, this);
+  }
 
   /**
    * Sets the swerve ModuleStates.
@@ -391,7 +390,7 @@ public Command alignToSubstationCommand() {
    * @return the robot's heading in degrees, from -180 to 180
    */
   public double getHeading() {
-    return Rotation2d.fromDegrees(-m_gyro.getAngle()).getDegrees();
+    return Rotation2d.fromDegrees(m_gyro.getAngle()).getDegrees();
   }
 
   /**
@@ -400,7 +399,7 @@ public Command alignToSubstationCommand() {
    * @return The turn rate of the robot, in degrees per second
    */
   public double getTurnRate() {
-    return -m_gyro.getRate() * (DriveConstants.kGyroReversed ? -1.0 : 1.0);
+    return m_gyro.getRate() * (DriveConstants.kGyroReversed ? -1.0 : 1.0);
   }
 
 
