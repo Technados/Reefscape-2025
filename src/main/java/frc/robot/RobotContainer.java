@@ -131,7 +131,8 @@ public class RobotContainer {
     m_driverController.leftStick().whileTrue(m_robotDrive.setXCommand());
     
     // Hole left bumper to run intake and align to left/right substation
-    m_driverController.leftBumper().whileTrue(m_coralSubSystem.runIntakeCommand().alongWith(m_robotDrive.alignToSubstationCommand()));
+    m_driverController.leftBumper().whileTrue(m_coralSubSystem.runIntakeCommand());
+    //.alongWith(m_robotDrive.alignToSubstationCommand()));
 
     // Start Button -> Zero swerve heading
     m_driverController.start().onTrue(m_robotDrive.zeroHeadingCommand());
@@ -139,12 +140,12 @@ public class RobotContainer {
 
     // Operator Controller
     // Reef Scoring Alignments - d-pad aligns left, right, or center to reef sides using apriltag
-    m_operatorController.povLeft().whileTrue(m_robotDrive.alignToReefCommand(Alignment.LEFT))
-    .onFalse(new InstantCommand(() -> m_robotDrive.stopMovement())); // Stops on release
-    m_operatorController.povRight().whileTrue(m_robotDrive.alignToReefCommand(Alignment.RIGHT))
-    .onFalse(new InstantCommand(() -> m_robotDrive.stopMovement())); // Stops on release
-    m_operatorController.povUp().whileTrue(m_robotDrive.alignToReefCommand(Alignment.CENTER))
-    .onFalse(new InstantCommand(() -> m_robotDrive.stopMovement())); // Stops on release
+    m_operatorController.povLeft().whileTrue(m_robotDrive.alignToReefCommand(Alignment.LEFT));
+    //.onFalse(new InstantCommand(() -> m_robotDrive.stopMovement())); // Stops on release
+    m_operatorController.povRight().whileTrue(m_robotDrive.alignToReefCommand(Alignment.RIGHT));
+    //.onFalse(new InstantCommand(() -> m_robotDrive.stopMovement())); // Stops on release
+    m_operatorController.povUp().whileTrue(m_robotDrive.alignToReefCommand(Alignment.CENTER));
+    //.onFalse(new InstantCommand(() -> m_robotDrive.stopMovement())); // Stops on release
 
     // Left Bumper -> Run coral intake
     // Right Bumper -> Run coral intake in reverse

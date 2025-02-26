@@ -104,15 +104,15 @@ public final class Constants {
 public static final class LimelightPID {
   // 🎯 PID Gains for Reef Targeting
 
-    public static final double kP_turn = 0.006; // Reduce P to slow rotation response
+    public static final double kP_turn = 0.06; // Reduce P to slow rotation response
     public static final double kI_turn = 0.000;
-    public static final double kD_turn = 0.0003; // Keep small D to prevent oscillation
+    public static final double kD_turn = 0.003; // Keep small D to prevent oscillation
 
-  public static final double kP_distance = 0.05;  // Adjust as needed
+  public static final double kP_distance = 0.5;  // Adjust as needed
   public static final double kI_distance = 0.0;
   public static final double kD_distance = 0.002;
 
-  public static final double kP_strafe = 0.03;  // 🎯 PID for left/right strafing (Adjust as needed)
+  public static final double kP_strafe = 0.3;  // 🎯 PID for left/right strafing (Adjust as needed)
   public static final double kI_strafe = 0.0;
   public static final double kD_strafe = 0.002;
 }
