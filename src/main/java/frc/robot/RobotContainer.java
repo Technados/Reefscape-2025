@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
@@ -67,11 +68,24 @@ public class RobotContainer {
 
   // Commands for PathPlanner
   private void registerPathPlannerCommands() {
-    NamedCommands.registerCommand("MoveArmToScoring", m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack));
-    NamedCommands.registerCommand("MoveArmToStow", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1));
+    NamedCommands.registerCommand("CoralFeed", m_coralSubSystem.setSetpointCommand(Setpoint.kFeederStation));
+    NamedCommands.registerCommand("CoralPositionL2", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel2));
+    NamedCommands.registerCommand("CoralPositionL3", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel3));
+    NamedCommands.registerCommand("CoralPositionL4", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel4));
+    NamedCommands.registerCommand("KnockBack", m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack));
     NamedCommands.registerCommand("RunIntake", m_coralSubSystem.runIntakeCommand().withTimeout(1.0));
-    NamedCommands.registerCommand("ReverseIntake", m_coralSubSystem.reverseIntakeCommand().withTimeout(1.0));
+    NamedCommands.registerCommand("ScoreCoral", m_coralSubSystem.reverseIntakeCommand());
+
+    NamedCommands.registerCommand("ScoreL3",
+    new SequentialCommandGroup(
+        m_coralSubSystem.setSetpointCommand(Setpoint.kLevel3)
+        .andThen(() -> m_coralSubSystem.reverseIntakeCommand().schedule())
+        .andThen(() -> m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack).schedule())
+        )
+    );
 }
+
+
 
   // The driver's controller
   CommandXboxController m_driverController =
@@ -85,6 +99,9 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the button bindings
     configureButtonBindings();
+
+    // call the pathplanner command reg
+    registerPathPlannerCommands();
 
     // Configure default commands
     m_robotDrive.setDefaultCommand(
@@ -110,7 +127,7 @@ public class RobotContainer {
     autoChooser.addOption("1Meter", "1Meter");
     autoChooser.addOption("180", "180");
     autoChooser.addOption("Test Path", "Test Path");
-    autoChooser.addOption("MiddleCageBack", "MiddleCageBack");
+    autoChooser.addOption("BMDR3", "BMDR3");
     autoChooser.addOption("BackMiddle", "BackMiddle");
     
 

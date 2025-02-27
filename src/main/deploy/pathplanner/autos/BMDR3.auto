@@ -7,19 +7,31 @@
         {
           "type": "path",
           "data": {
+            "pathName": "BMD"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "DRight"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
             "pathName": "1Meter"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "CoralPositionL2"
+            "name": "CoralFeed"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Test Autos",
+  "folder": "Blue Middle",
   "choreoAuto": false
 }

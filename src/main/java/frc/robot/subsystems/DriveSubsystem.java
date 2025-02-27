@@ -279,29 +279,32 @@ public ChassisSpeeds getChassisSpeeds() {
       int tagID = (int) limelight.getEntry("tid").getDouble(-1);
 
       double targetHeading = getReefHeading(tagID);
-      if (targetHeading == Double.NaN) return; // No valid tag detected
+      if (Double.isNaN(targetHeading)) {
+        stopMovement();
+        return; // No valid tag detected, should prevent runaway movement behaviors
+      }
 
       double strafeOffset = getStrafeOffset(alignment);
+
+      //PID Calc for reef alignment
       double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
+      double strafePower = -limelightStrafePID.calculate(tx, strafeOffset);
+      double drivePower = -limelightStrafePID.calculate(ty, Constants.DesiredDistances.REEF_SCORING);
       // Apply a deadband to prevent constant micro-adjustments
-if (Math.abs(targetHeading - getHeading()) < 1.5) { // If within 1.5 degrees, stop rotating
-  turnPower = 0;
-
-
-}
-      double strafePower = limelightStrafePID.calculate(tx, strafeOffset);
-      double drivePower = limelightDistancePID.calculate(ty, Constants.DesiredDistances.REEF_SCORING);
+//if (Math.abs(targetHeading - getHeading()) < 1.5) { // If within 1.5 degrees, stop rotating
+  //turnPower = 0;
 
       if (!limelightTurnPID.atSetpoint()) {
           drive(0, 0, turnPower, false);
-      } else if (!limelightStrafePID.atSetpoint()) {
-          drive(0, strafePower, 0, false);
-      } else if (!limelightDistancePID.atSetpoint()) {
-          drive(drivePower, 0, 0, false);
-      } else {
-          drive(0, 0, 0, false);
+          return;
       }
-  }
+      drive(drivePower, strafePower, 0, false);
+
+      if (limelightTurnPID.atSetpoint() && limelightStrafePID.atSetpoint() && limelightDistancePID.atSetpoint()){
+        stopMovement();
+      }
+    }
+
 
   private double getReefHeading(int tagID) {
       switch (tagID) {
@@ -329,33 +332,33 @@ if (Math.abs(targetHeading - getHeading()) < 1.5) { // If within 1.5 degrees, st
       }
   }
 
-  public void alignToSubstation() {
-      int tagID = (int) limelight.getEntry("tid").getDouble(-1);
-      double targetHeading = (tagID == 6 || tagID == 19) ? 125.0 : (tagID == 17 || tagID == 8) ? -125.0 : Double.NaN;
-      if (targetHeading == Double.NaN) return;
+  // public void alignToSubstation() {
+  //     int tagID = (int) limelight.getEntry("tid").getDouble(-1);
+  //     double targetHeading = (tagID == 6 || tagID == 19) ? 125.0 : (tagID == 17 || tagID == 8) ? -125.0 : Double.NaN;
+  //     if (targetHeading == Double.NaN) return;
 
-      double tx = limelight.getEntry("tx").getDouble(0.0);
-      double ty = limelight.getEntry("ty").getDouble(0.0);
+  //     double tx = limelight.getEntry("tx").getDouble(0.0);
+  //     double ty = limelight.getEntry("ty").getDouble(0.0);
 
-      double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
-      double drivePower = limelightDistancePID.calculate(ty, Constants.DesiredDistances.SUBSTATION_PICKUP);
+  //     double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
+  //     double drivePower = limelightDistancePID.calculate(ty, Constants.DesiredDistances.SUBSTATION_PICKUP);
 
-      if (!limelightTurnPID.atSetpoint()) {
-          drive(0, 0, turnPower, false);
-      } else if (!limelightDistancePID.atSetpoint()) {
-          drive(drivePower, 0, 0, false);
-      } else {
-          drive(0, 0, 0, false);
-      }
-  }
+  //     if (!limelightTurnPID.atSetpoint()) {
+  //         drive(0, 0, turnPower, false);
+  //     } else if (!limelightDistancePID.atSetpoint()) {
+  //         drive(drivePower, 0, 0, false);
+  //     } else {
+  //         drive(0, 0, 0, false);
+  //     }
+  // }
 
   public Command alignToReefCommand(Alignment alignment) {
       return new RunCommand(() -> alignToReef(alignment), this);
   }
 
-  public Command alignToSubstationCommand() {
-      return new RunCommand(this::alignToSubstation, this);
-  }
+  // public Command alignToSubstationCommand() {
+  //     return new RunCommand(this::alignToSubstation, this);
+  // }
 
   /**
    * Sets the swerve ModuleStates.

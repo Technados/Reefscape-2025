@@ -4,24 +4,24 @@
     {
       "anchor": {
         "x": 5.742,
-        "y": 4.189
+        "y": 4.025
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.229636029179574,
-        "y": 4.1844654205835194
+        "x": 5.714598787780872,
+        "y": 4.2810118461454145
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 6.242,
+        "x": 5.742,
         "y": 4.189
       },
       "prevControl": {
-        "x": 5.735692735201673,
-        "y": 4.184746529926451
+        "x": 5.778485271409533,
+        "y": 3.908461317256461
       },
       "nextControl": null,
       "isLocked": false,
@@ -33,20 +33,27 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "CoralFeed",
-      "waypointRelativePos": 0,
+      "name": "ScoreL3",
+      "waypointRelativePos": 1.0,
       "endWaypointRelativePos": null,
       "command": {
-        "type": "named",
+        "type": "sequential",
         "data": {
-          "name": "CoralFeed"
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "ScoreL3"
+              }
+            }
+          ]
         }
       }
     }
   ],
   "globalConstraints": {
-    "maxVelocity": 2.0,
-    "maxAcceleration": 1.0,
+    "maxVelocity": 4.0,
+    "maxAcceleration": 3.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 540.0,
     "nominalVoltage": 12.0,
@@ -57,7 +64,7 @@
     "rotation": 0.0
   },
   "reversed": false,
-  "folder": "Test Paths",
+  "folder": "In Between Paths",
   "idealStartingState": {
     "velocity": 0,
     "rotation": 0.0

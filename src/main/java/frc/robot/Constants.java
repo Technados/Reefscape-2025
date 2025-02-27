@@ -94,7 +94,7 @@ public final class Constants {
 }
     // Desired distances for alignment (to be fine-tuned)
     public static final class DesiredDistances {
-      public static final double REEF_SCORING = 2.0; // Close to reef
+      public static final double REEF_SCORING = 0.0; // Close to reef
       public static final double SUBSTATION_PICKUP = 10.0; // ~15ft from reef
   }
           // Substation Heading Angles (from driver station perspective)
