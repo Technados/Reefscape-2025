@@ -55,7 +55,16 @@ public final class Constants {
 
   public static final class AlgaeSubsystemConstants {
     public static final int kIntakeMotorCanId = 12;
-    public static final int kPivotMotorCanId = 13;
+
+    public static final class IntakeSetpoints{
+      public static final double kForward = 0.5;
+      public static final double kReverse = -0.5;
+      public static final double kHold = 0.25;
+    }
+  }
+  public static final class ClimberSubsystemConstants {
+    public static final int kClimbMotorCanId = 13;
+    public static final int kClimbArmMotorCanId = 14;
 
     public static final class ArmSetpoints {
       public static final double kStow = 18.5;
@@ -63,7 +72,7 @@ public final class Constants {
       public static final double kDown = 0;
     }
 
-    public static final class IntakeSetpoints {
+    public static final class ClimbSetpoints {
       public static final double kForward = 0.5;
       public static final double kReverse = -0.5;
       public static final double kHold = 0.25;

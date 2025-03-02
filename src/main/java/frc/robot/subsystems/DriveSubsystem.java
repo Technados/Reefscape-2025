@@ -26,7 +26,6 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import frc.robot.Constants;
 import frc.robot.Constants.AprilTagIDs;
-import frc.robot.Constants.CoralSubsystemConstants.IntakeSetpoints;
 import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -213,6 +212,7 @@ public void setSlowMode(boolean enable) {
 
     SmartDashboard.putBoolean("Field Relative", fieldRelative);
     SmartDashboard.putBoolean("Slow Mode", slowMode);
+    
     // Convert the commanded speeds into the correct units for the drivetrain
     // Apply speed reduction if slow mode is active
     double speedFactor = slowMode ? DriveConstants.kSlowSpeedFactor : 1.0;

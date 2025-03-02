@@ -1,9 +1,6 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.sim.SparkFlexSim;
-import com.revrobotics.sim.SparkLimitSwitchSim;
-import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -12,20 +9,7 @@ import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj.shuffleboard.WidgetType;
-import edu.wpi.first.wpilibj.simulation.ElevatorSim;
-import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -34,7 +18,6 @@ import frc.robot.Constants.CoralSubsystemConstants;
 import frc.robot.Constants.CoralSubsystemConstants.ArmSetpoints;
 import frc.robot.Constants.CoralSubsystemConstants.ElevatorSetpoints;
 import frc.robot.Constants.CoralSubsystemConstants.IntakeSetpoints;
-import frc.robot.Constants.SimulationRobotConstants;
 import edu.wpi.first.wpilibj.DigitalInput;
 
 public class CoralSubsystem extends SubsystemBase {
@@ -74,79 +57,8 @@ public class CoralSubsystem extends SubsystemBase {
   private double armCurrentTarget = ArmSetpoints.kLevel1;
   private double elevatorCurrentTarget = ElevatorSetpoints.kLevel1;
 
-  // Simulation setup and variables
+  // Elevator Limit Switch
   private DigitalInput elevatorLimitSwitch = new DigitalInput(0);
-  private DCMotor elevatorMotorModel = DCMotor.getNEO(1);
-  private SparkMaxSim elevatorMotorSim;
-  private SparkLimitSwitchSim elevatorLimitSwitchSim;
-  private final ElevatorSim m_elevatorSim =
-      new ElevatorSim(
-          elevatorMotorModel,
-          SimulationRobotConstants.kElevatorGearing,
-          SimulationRobotConstants.kCarriageMass,
-          SimulationRobotConstants.kElevatorDrumRadius,
-          SimulationRobotConstants.kMinElevatorHeightMeters,
-          SimulationRobotConstants.kMaxElevatorHeightMeters,
-          true,
-          SimulationRobotConstants.kMinElevatorHeightMeters,
-          0.0,
-          0.0);
-
-  private DCMotor armMotorModel = DCMotor.getNEO(1);
-  private SparkMaxSim armMotorSim;
-  private final SingleJointedArmSim m_armSim =
-      new SingleJointedArmSim(
-          armMotorModel,
-          SimulationRobotConstants.kArmReduction,
-          SingleJointedArmSim.estimateMOI(
-              SimulationRobotConstants.kArmLength, SimulationRobotConstants.kArmMass),
-          SimulationRobotConstants.kArmLength,
-          SimulationRobotConstants.kMinAngleRads,
-          SimulationRobotConstants.kMaxAngleRads,
-          true,
-          SimulationRobotConstants.kMinAngleRads,
-          0.0,
-          0.0);
-
-  // Mechanism2d setup for subsystem
-  private final Mechanism2d m_mech2d = new Mechanism2d(50, 50);
-  private final MechanismRoot2d m_mech2dRoot = m_mech2d.getRoot("ElevatorArm Root", 25, 0);
-  private final MechanismLigament2d m_elevatorMech2d =
-      m_mech2dRoot.append(
-          new MechanismLigament2d(
-              "Elevator",
-              SimulationRobotConstants.kMinElevatorHeightMeters
-                  * SimulationRobotConstants.kPixelsPerMeter,
-              90));
-  private final MechanismLigament2d m_armMech2d =
-      m_elevatorMech2d.append(
-          new MechanismLigament2d(
-              "Arm",
-              SimulationRobotConstants.kArmLength * SimulationRobotConstants.kPixelsPerMeter,
-              180 - Units.radiansToDegrees(SimulationRobotConstants.kMinAngleRads) - 90));
-
-
-   // Display subsystem values
-    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Arm/Target Position", armCurrentTarget);
-    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Arm/Actual Position", armEncoder.getPosition());
-    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Elevator/Target Position", elevatorCurrentTarget);
-    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Elevator/Actual Position", elevatorEncoder.getPosition());
-    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Intake/Applied Output", intakeMotor.getAppliedOutput());
-    // SmartDashboard.putBoolean("SmartDashboard/Coral Subsystem/Coral/Intake/Limit Switch", !elevatorLimitSwitch.get());
-
-
-
-  // Coral Tab / Entries
-  private ShuffleboardTab coralTab = Shuffleboard.getTab("Coral Subsystem");
-  private GenericEntry armTargetPosEntry = coralTab.add("Arm Target Position", 0).withWidget(BuiltInWidgets.kTextView).getEntry();
-  private GenericEntry armActualPosEntry = coralTab.add("Arm Actual Position", 0).withWidget(BuiltInWidgets.kTextView).getEntry();
-  private GenericEntry elevatorTargetPosEntry = coralTab.add("Elevator Target Position", 0).withWidget(BuiltInWidgets.kTextView).getEntry();
-  private GenericEntry elevatorActualPosEntry = coralTab.add("Elevator Actual Position", 0).withWidget(BuiltInWidgets.kTextView).getEntry();
-  private GenericEntry intakeAppliedOutputEntry = coralTab.add("Intake Applied Output", 0).withWidget(BuiltInWidgets.kTextView).getEntry();
-  private GenericEntry intakeLimitSwitchEntry = coralTab.add("Intake Limit Switch", 0).withWidget(BuiltInWidgets.kBooleanBox).getEntry();
-
-
-
 
 
   public CoralSubsystem() {
@@ -173,18 +85,10 @@ public class CoralSubsystem extends SubsystemBase {
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
 
-    // Display mechanism2d
-    //Shuffleboard.getTab("Coral Subsystem").add(m_mech2d);
-    SmartDashboard.putData("SmartDashboard/Coral Subsystem", m_mech2d);
-
     // Zero arm and elevator encoders on initialization
     armEncoder.setPosition(0);
     elevatorEncoder.setPosition(0);
 
-    // Initialize simulation values
-    elevatorMotorSim = new SparkMaxSim(elevatorMotor, elevatorMotorModel);
-    elevatorLimitSwitchSim = new SparkLimitSwitchSim(elevatorMotor, false);
-    armMotorSim = new SparkMaxSim(armMotor, armMotorModel);
   }
 
 
@@ -323,79 +227,13 @@ public class CoralSubsystem extends SubsystemBase {
     zeroElevatorOnLimitSwitch();
     zeroOnUserButton();
 
-    
-
-
+  
     // Display subsystem values
-    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Arm/Target Position", armCurrentTarget);
-    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Arm/Actual Position", armEncoder.getPosition());
-    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Elevator/Target Position", elevatorCurrentTarget);
-    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Elevator/Actual Position", elevatorEncoder.getPosition());
-    // SmartDashboard.putNumber("SmartDashboard/Coral Subsystem/Coral/Intake/Applied Output", intakeMotor.getAppliedOutput());
-    // SmartDashboard.putBoolean("SmartDashboard/Coral Subsystem/Coral/Intake/Limit Switch", !elevatorLimitSwitch.get());
-
-
-    // Display subsystem values
-    armTargetPosEntry.setDouble(armCurrentTarget);
-    armActualPosEntry.setDouble(armEncoder.getPosition());
-    elevatorTargetPosEntry.setDouble(elevatorCurrentTarget);
-    elevatorActualPosEntry.setDouble(elevatorEncoder.getPosition());
-    intakeAppliedOutputEntry.setDouble(intakeMotor.getAppliedOutput());
-    intakeLimitSwitchEntry.setBoolean(!elevatorLimitSwitch.get());
-    
-    
-
-
-
-    // Update mechanism2d
-    m_elevatorMech2d.setLength(
-        SimulationRobotConstants.kPixelsPerMeter * SimulationRobotConstants.kMinElevatorHeightMeters
-            + SimulationRobotConstants.kPixelsPerMeter
-                * (elevatorEncoder.getPosition() / SimulationRobotConstants.kElevatorGearing)
-                * (SimulationRobotConstants.kElevatorDrumRadius * 2.0 * Math.PI));
-    m_armMech2d.setAngle(
-        180
-            - ( // mirror the angles so they display in the correct direction
-            Units.radiansToDegrees(SimulationRobotConstants.kMinAngleRads)
-                + Units.rotationsToDegrees(
-                    armEncoder.getPosition() / SimulationRobotConstants.kArmReduction))
-            - 90 // subtract 90 degrees to account for the elevator
-        );
-  }
-
-  /** Get the current drawn by each simulation physics model */
-  public double getSimulationCurrentDraw() {
-    return m_elevatorSim.getCurrentDrawAmps() + m_armSim.getCurrentDrawAmps();
-  }
-
-  @Override
-  public void simulationPeriodic() {
-    // In this method, we update our simulation of what our elevator is doing
-    // First, we set our "inputs" (voltages)
-    m_elevatorSim.setInput(elevatorMotor.getAppliedOutput() * RobotController.getBatteryVoltage());
-    m_armSim.setInput(armMotor.getAppliedOutput() * RobotController.getBatteryVoltage());
-
-    // Update sim limit switch
-    elevatorLimitSwitchSim.setPressed(m_elevatorSim.getPositionMeters() == 0);
-
-    // Next, we update it. The standard loop time is 20ms.
-    m_elevatorSim.update(0.020);
-    m_armSim.update(0.020);
-
-    // Iterate the elevator and arm SPARK simulations
-    elevatorMotorSim.iterate(
-        ((m_elevatorSim.getVelocityMetersPerSecond()
-                    / (SimulationRobotConstants.kElevatorDrumRadius * 2.0 * Math.PI))
-                * SimulationRobotConstants.kElevatorGearing)
-            * 60.0,
-        RobotController.getBatteryVoltage(),
-        0.02);
-    armMotorSim.iterate(
-        Units.radiansPerSecondToRotationsPerMinute(
-            m_armSim.getVelocityRadPerSec() * SimulationRobotConstants.kArmReduction),
-        RobotController.getBatteryVoltage(),
-        0.02);
-
-    // SimBattery is updated in Robot.java
+    SmartDashboard.putNumber("Coral/Arm/Target Position", armCurrentTarget);
+    SmartDashboard.putNumber("Coral/Arm/Actual Position", armEncoder.getPosition());
+    SmartDashboard.putNumber("Coral/Elevator/Target Position", elevatorCurrentTarget);
+    SmartDashboard.putNumber("Coral/Elevator/Actual Position", elevatorEncoder.getPosition());
+    SmartDashboard.putNumber("Coral/Intake/Applied Output", intakeMotor.getAppliedOutput());
+  
   }
 }

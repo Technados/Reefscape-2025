@@ -1,34 +1,20 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.sim.SparkFlexSim;
-import com.revrobotics.sim.SparkLimitSwitchSim;
-import com.revrobotics.sim.SparkMaxSim;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
-import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.simulation.ElevatorSim;
-import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Configs;
-import frc.robot.Constants.CoralSubsystemConstants;
-import frc.robot.Constants.CoralSubsystemConstants.ArmSetpoints;
-import frc.robot.Constants.CoralSubsystemConstants.ElevatorSetpoints;
-import frc.robot.Constants.CoralSubsystemConstants.IntakeSetpoints;
-import frc.robot.Constants.SimulationRobotConstants;
+import frc.robot.Constants.ClimberSubsystemConstants;
+import frc.robot.Constants.ClimberSubsystemConstants.ArmSetpoints;
+import frc.robot.Constants.ClimberSubsystemConstants.ClimbSetpoints;
+
 
 public class ClimberSubsystem extends SubsystemBase {
   /** Subsystem-wide setpoints */
@@ -42,54 +28,18 @@ public class ClimberSubsystem extends SubsystemBase {
 
   // Initialize arm SPARK. We will use MAXMotion position control for the arm, so we also need to
   // initialize the closed loop controller and encoder.
-  private SparkMax climbMotor =
-      new SparkMax(CoralSubsystemConstants.kArmMotorCanId, MotorType.kBrushless);
-  private SparkClosedLoopController armController = climbMotor.getClosedLoopController();
-  private RelativeEncoder armEncoder = climbMotor.getEncoder();
+  private SparkMax climbArmMotor =
+      new SparkMax(ClimberSubsystemConstants.kClimbArmMotorCanId, MotorType.kBrushless);
+  private SparkClosedLoopController armController = climbArmMotor.getClosedLoopController();
+  private RelativeEncoder climbArmEncoder = climbArmMotor.getEncoder();
 
   // Initialize intake SPARK. We will use open loop control for this so we don't need a closed loop
   // controller like above.
-  private SparkMax intakeMotor =
-      new SparkMax(CoralSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
-
+  private SparkMax climbMotor = new SparkMax(ClimberSubsystemConstants.kClimbMotorCanId, MotorType.kBrushless);
+  
   // Member variables for subsystem state management
   private boolean wasResetByButton = false;
-  private double armCurrentTarget = ArmSetpoints.kFeederStation;
-
-
-  // Simulation setup and variables
-  private DCMotor armMotorModel = DCMotor.getNEO(1);
-  private SparkMaxSim armMotorSim;
-  private final SingleJointedArmSim m_armSim =
-      new SingleJointedArmSim(
-          armMotorModel,
-          SimulationRobotConstants.kArmReduction,
-          SingleJointedArmSim.estimateMOI(
-              SimulationRobotConstants.kArmLength, SimulationRobotConstants.kArmMass),
-          SimulationRobotConstants.kArmLength,
-          SimulationRobotConstants.kMinAngleRads,
-          SimulationRobotConstants.kMaxAngleRads,
-          true,
-          SimulationRobotConstants.kMinAngleRads,
-          0.0,
-          0.0);
-
-  // Mechanism2d setup for subsystem
-  private final Mechanism2d m_mech2d = new Mechanism2d(50, 50);
-  private final MechanismRoot2d m_mech2dRoot = m_mech2d.getRoot("ElevatorArm Root", 25, 0);
-  private final MechanismLigament2d m_elevatorMech2d =
-      m_mech2dRoot.append(
-          new MechanismLigament2d(
-              "Elevator",
-              SimulationRobotConstants.kMinElevatorHeightMeters
-                  * SimulationRobotConstants.kPixelsPerMeter,
-              90));
-  private final MechanismLigament2d m_armMech2d =
-      m_elevatorMech2d.append(
-          new MechanismLigament2d(
-              "Arm",
-              SimulationRobotConstants.kArmLength * SimulationRobotConstants.kPixelsPerMeter,
-              180 - Units.radiansToDegrees(SimulationRobotConstants.kMinAngleRads) - 90));
+  private double armCurrentTarget = ArmSetpoints.kStow;
 
   public ClimberSubsystem() {
     /*
@@ -102,24 +52,20 @@ public class ClimberSubsystem extends SubsystemBase {
      * the SPARK loses power. This is useful for power cycles that may occur
      * mid-operation.
      */
-    climbMotor.configure(
-        Configs.CoralSubsystem.armConfig,
+    climbArmMotor.configure(
+        Configs.ClimberSubsystem.climbArmConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
-    intakeMotor.configure(
-        Configs.CoralSubsystem.intakeConfig,
+    climbMotor.configure(
+        Configs.ClimberSubsystem.climbConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
 
-    // Display mechanism2d
-    SmartDashboard.putData("Coral Subsystem", m_mech2d);
 
     // Zero arm and elevator encoders on initialization
-    armEncoder.setPosition(0);
-
-    // Initialize simulation values
-    armMotorSim = new SparkMaxSim(climbMotor, armMotorModel);
+    climbArmEncoder.setPosition(0);
   }
+
 
   /**
    * Drive the arm and elevator motors to their respective setpoints. This will use MAXMotion
@@ -136,15 +82,15 @@ public class ClimberSubsystem extends SubsystemBase {
       // Zero the encoders only when button switches from "unpressed" to "pressed" to prevent
       // constant zeroing while pressed
       wasResetByButton = true;
-      armEncoder.setPosition(0);
+      climbArmEncoder.setPosition(0);
     } else if (!RobotController.getUserButton()) {
       wasResetByButton = false;
     }
   }
 
   /** Set the intake motor power in the range of [-1, 1]. */
-  private void setIntakePower(double power) {
-    intakeMotor.set(power);
+  private void setClimbPower(double power) {
+    climbMotor.set(power);
   }
   
 
@@ -152,18 +98,18 @@ public class ClimberSubsystem extends SubsystemBase {
    * Command to run the intake motor. When the command is interrupted, e.g. the button is released,
    * the motor will stop.
    */
-  public Command runIntakeCommand() {
+  public Command runClimbCommand() {
     return this.startEnd(
-        () -> this.setIntakePower(IntakeSetpoints.kForward), () -> this.setIntakePower(0.0));
+        () -> this.setClimbPower(ClimbSetpoints.kForward), () -> this.setClimbPower(0.0));
   }
 
   /**
    * Command to reverses the intake motor. When the command is interrupted, e.g. the button is
    * released, the motor will stop.
    */
-  public Command reverseIntakeCommand() {
+  public Command reverseClimbCommand() {
     return this.startEnd(
-        () -> this.setIntakePower(IntakeSetpoints.kReverse), () -> this.setIntakePower(0.0));
+        () -> this.setClimbPower(ClimbSetpoints.kReverse), () -> this.setClimbPower(0.0));
   }
 
   @Override
@@ -171,31 +117,5 @@ public class ClimberSubsystem extends SubsystemBase {
     moveToSetpoint();
     zeroOnUserButton();
 
-    // Display subsystem values
-    SmartDashboard.putNumber("Coral/Arm/Target Position", armCurrentTarget);
-    SmartDashboard.putNumber("Coral/Arm/Actual Position", armEncoder.getPosition());
-    SmartDashboard.putNumber("Coral/Intake/Applied Output", intakeMotor.getAppliedOutput());
-
-    // Update mechanism2d
-    m_armMech2d.setAngle(
-        180
-            - ( // mirror the angles so they display in the correct direction
-            Units.radiansToDegrees(SimulationRobotConstants.kMinAngleRads)
-                + Units.rotationsToDegrees(
-                    armEncoder.getPosition() / SimulationRobotConstants.kArmReduction))
-            - 90 // subtract 90 degrees to account for the elevator
-        );
-  }
-
-  @Override
-  public void simulationPeriodic() {
-    // Iterate the arm SPARK simulations
-    armMotorSim.iterate(
-        Units.radiansPerSecondToRotationsPerMinute(
-            m_armSim.getVelocityRadPerSec() * SimulationRobotConstants.kArmReduction),
-        RobotController.getBatteryVoltage(),
-        0.02);
-
-    // SimBattery is updated in Robot.java
   }
 }

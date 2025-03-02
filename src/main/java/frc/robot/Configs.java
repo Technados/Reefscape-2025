@@ -1,6 +1,5 @@
 package frc.robot;
 
-import com.pathplanner.lib.config.RobotConfig;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.LimitSwitchConfig.Type;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -59,8 +58,8 @@ public final class Configs {
 
   public static final class CoralSubsystem {
     public static final SparkMaxConfig armConfig = new SparkMaxConfig();
-    public static final SparkFlexConfig elevatorConfig = new SparkFlexConfig();
-    public static final SparkMaxConfig intakeConfig = new SparkMaxConfig();
+    public static final SparkMaxConfig elevatorConfig = new SparkMaxConfig();
+    public static final SparkFlexConfig intakeConfig = new SparkFlexConfig();
 
     static {
       // Configure basic settings of the arm motor
@@ -78,8 +77,8 @@ public final class Configs {
           .outputRange(-1, 1)
           .maxMotion
           // Set MAXMotion parameters for position control
-          .maxVelocity(3000)
-          .maxAcceleration(2000)
+          .maxVelocity(4000)
+          .maxAcceleration(6000)
           .allowedClosedLoopError(0.15);
         
 
@@ -118,27 +117,36 @@ public final class Configs {
   }
 
   public static final class AlgaeSubsystem {
-    public static final SparkFlexConfig intakeConfig = new SparkFlexConfig();
-    public static final SparkFlexConfig armConfig = new SparkFlexConfig();
+    public static final SparkMaxConfig intakeConfig = new SparkMaxConfig();
+    static {
+      // Configure basic settings of the intake motor
+      intakeConfig.inverted(true).idleMode(IdleMode.kBrake).smartCurrentLimit(40);
+    }
+  }
+
+  public static final class ClimberSubsystem {
+    public static final SparkMaxConfig climbArmConfig = new SparkMaxConfig();
+    public static final SparkMaxConfig climbConfig = new SparkMaxConfig();
 
     static {
-      // Configure basic setting of the arm motor
-      armConfig.smartCurrentLimit(40);
+      // Configure basic settings of the arm motor
+      climbArmConfig.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(40).voltageCompensation(12);
 
       /*
        * Configure the closed loop controller. We want to make sure we set the
        * feedback sensor as the primary encoder.
        */
-      armConfig
+      climbArmConfig
           .closedLoop
           .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-          // Set PID values for position control. We don't need to pass a closed
-          // loop slot, as it will default to slot 0.
+          // Set PID values for position control
           .p(0.1)
-          .outputRange(-0.5, 0.5);
-
-      // Configure basic settings of the intake motor
-      intakeConfig.inverted(true).idleMode(IdleMode.kBrake).smartCurrentLimit(40);
+          .outputRange(-1, 1)
+          .maxMotion
+          // Set MAXMotion parameters for position control
+          .maxVelocity(4000)
+          .maxAcceleration(6000)
+          .allowedClosedLoopError(0.15);
     }
-  }
+}
 }

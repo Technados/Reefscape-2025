@@ -5,46 +5,29 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.CoralSubsystemConstants;
-import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
-import frc.robot.Constants.AlgaeSubsystemConstants.ArmSetpoints;
 import frc.robot.subsystems.AlgaeSubsystem;
 import frc.robot.subsystems.CoralSubsystem;
 import frc.robot.subsystems.CoralSubsystem.Setpoint;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.DriveSubsystem.Alignment;
-import frc.robot.subsystems.ClimberSubsystem;
-import java.util.List;
+
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import com.pathplanner.lib.util.GeometryUtil;
+
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -197,9 +180,9 @@ public class RobotContainer {
     m_driverController.start().onTrue(m_robotDrive.zeroHeadingCommand());
 
     // Right Bumper -> Enable Slow Mode While Held
-    m_driverController.rightBumper().whileTrue(
-    new RunCommand(() -> m_robotDrive.setSlowMode(true), m_robotDrive)
-    ).onFalse(new InstantCommand(() -> m_robotDrive.setSlowMode(false)));
+    m_driverController.rightBumper()
+    .whileTrue(new InstantCommand(() -> m_robotDrive.setSlowMode(true)))
+    .onFalse(new InstantCommand(() -> m_robotDrive.setSlowMode(false)));
     
 
     // Operator Controller
@@ -257,11 +240,6 @@ public class RobotContainer {
 
   }
 
-  public double getSimulationTotalCurrentDraw() {
-    // for each subsystem with simulation
-    return m_coralSubSystem.getSimulationCurrentDraw()
-        + m_algaeSubsystem.getSimulationCurrentDraw();
-  }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
