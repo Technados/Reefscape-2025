@@ -35,10 +35,10 @@ public final class Constants {
     }
 
     public static final class ArmSetpoints {
-      public static final double kFeederStation = -5;
+      public static final double kFeederStation = -5.25;
       public static final double kLevel1 = 0;
       public static final double kLevel2 = 15;
-      public static final double kLevel3 = 17;
+      public static final double kLevel3 = 16.75;
       public static final double kLevel4 = 19.5;
       public static final double kKnockBack = 20;
     }
@@ -50,7 +50,7 @@ public final class Constants {
       public static final double kReverse = 0.5;
     }
 
-    public static final double kGravityFF = 0.15; //adjust after testing
+    public static final double kGravityFF = 0.10; //adjust after testing
   }
 
   public static final class AlgaeSubsystemConstants {
@@ -104,25 +104,26 @@ public final class Constants {
 public static final class LimelightPID {
   // 🎯 PID Gains for Reef Targeting
 
-    public static final double kP_turn = 0.06; // Reduce P to slow rotation response
+    public static final double kP_turn = 0.006; // Reduce P to slow rotation response
     public static final double kI_turn = 0.000;
-    public static final double kD_turn = 0.003; // Keep small D to prevent oscillation
+    public static final double kD_turn = 0.00; // Keep small D to prevent oscillation
 
-  public static final double kP_distance = 0.5;  // Adjust as needed
+  public static final double kP_distance = 0.005;  // Adjust as needed
   public static final double kI_distance = 0.0;
-  public static final double kD_distance = 0.002;
+  public static final double kD_distance = 0.00;
 
-  public static final double kP_strafe = 0.3;  // 🎯 PID for left/right strafing (Adjust as needed)
+  public static final double kP_strafe = 0.003;  // 🎯 PID for left/right strafing (Adjust as needed)
   public static final double kI_strafe = 0.0;
-  public static final double kD_strafe = 0.002;
+  public static final double kD_strafe = 0.00;
 }
 
 
   public static final class DriveConstants {
     // Driving Parameters - Note that these are not the maximum capable speeds of
     // the robot, rather the allowed maximum speeds
-    public static final double kMaxSpeedMetersPerSecond = 1;
-    public static final double kMaxAngularSpeed = 1 * Math.PI; // radians per second
+    public static final double kMaxSpeedMetersPerSecond = 3;
+    public static final double kMaxAngularSpeed = 2 * Math.PI; // radians per second
+    public static final double kSlowSpeedFactor = 0.2; // Slow mode speed factor (40% of normal speed)
 
     // Chassis configuration
     public static final double kTrackWidth = Units.inchesToMeters(23.5);

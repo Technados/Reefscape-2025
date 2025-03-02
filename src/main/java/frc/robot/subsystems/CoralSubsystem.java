@@ -296,7 +296,7 @@ public class CoralSubsystem extends SubsystemBase {
   public Command reverseIntakeCommand() {
     return this.startEnd(
         () -> this.setIntakePower(IntakeSetpoints.kReverse), () -> this.setIntakePower(0.0))
-        .withTimeout(1.0);
+        .withTimeout(0.50);
   }
 
   /**
@@ -311,6 +311,10 @@ public class CoralSubsystem extends SubsystemBase {
   public Command waitUntilIntakeSafe(double armCurrentTarget) {
     return this.run(() -> {})
       .until(() -> Math.abs(armEncoder.getPosition() - armCurrentTarget) <0.5 );
+  } 
+  public Command waitUntilElevatorInPosition(double elevatorCurrentTarget) {
+    return this.run(() -> {})
+      .until(() -> Math.abs(elevatorEncoder.getPosition() - elevatorCurrentTarget) <0.5 );
   } 
 
   @Override

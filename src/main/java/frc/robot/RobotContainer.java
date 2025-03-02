@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.AutoConstants;
@@ -69,22 +70,63 @@ public class RobotContainer {
   // Commands for PathPlanner
   private void registerPathPlannerCommands() {
     NamedCommands.registerCommand("CoralFeed", m_coralSubSystem.setSetpointCommand(Setpoint.kFeederStation));
-    NamedCommands.registerCommand("CoralPositionL2", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel2));
-    NamedCommands.registerCommand("CoralPositionL3", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel3));
-    NamedCommands.registerCommand("CoralPositionL4", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel4));
-    NamedCommands.registerCommand("KnockBack", m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack));
+    //NamedCommands.registerCommand("CoralPositionL2", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel2));
+    //NamedCommands.registerCommand("CoralPositionL3", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel3));
+    //NamedCommands.registerCommand("CoralPositionL4", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel4));
+    //NamedCommands.registerCommand("KnockBack", m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack));
     NamedCommands.registerCommand("RunIntake", m_coralSubSystem.runIntakeCommand().withTimeout(1.0));
-    NamedCommands.registerCommand("ScoreCoral", m_coralSubSystem.reverseIntakeCommand());
+    //NamedCommands.registerCommand("ScoreCoral", m_coralSubSystem.reverseIntakeCommand());
+
+    NamedCommands.registerCommand("ScoreL2",
+    new SequentialCommandGroup(
+
+        m_coralSubSystem.waitUntilElevatorInPosition(CoralSubsystemConstants.ElevatorSetpoints.kLevel2),
+        m_coralSubSystem.reverseIntakeCommand(),
+        m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack),
+        m_coralSubSystem.waitUntilIntakeSafe(CoralSubsystemConstants.ArmSetpoints.kKnockBack)
+        )
+    );
+
+    NamedCommands.registerCommand("MoveToL2",
+    new SequentialCommandGroup(
+        m_coralSubSystem.setSetpointCommand(Setpoint.kLevel2),
+        m_coralSubSystem.waitUntilIntakeSafe(CoralSubsystemConstants.ArmSetpoints.kLevel2)
+    ));
 
     NamedCommands.registerCommand("ScoreL3",
     new SequentialCommandGroup(
-        m_coralSubSystem.setSetpointCommand(Setpoint.kLevel3)
-        .andThen(() -> m_coralSubSystem.reverseIntakeCommand().schedule())
-        .andThen(() -> m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack).schedule())
+
+        m_coralSubSystem.waitUntilElevatorInPosition(CoralSubsystemConstants.ElevatorSetpoints.kLevel3),
+        m_coralSubSystem.reverseIntakeCommand(),
+        m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack),
+        m_coralSubSystem.waitUntilIntakeSafe(CoralSubsystemConstants.ArmSetpoints.kKnockBack)
         )
     );
-}
 
+    NamedCommands.registerCommand("MoveToL3",
+    new SequentialCommandGroup(
+        m_coralSubSystem.setSetpointCommand(Setpoint.kLevel3),
+        m_coralSubSystem.waitUntilIntakeSafe(CoralSubsystemConstants.ArmSetpoints.kLevel3)
+    ));
+
+    NamedCommands.registerCommand("ScoreL4",
+    new SequentialCommandGroup(
+
+        m_coralSubSystem.waitUntilElevatorInPosition(CoralSubsystemConstants.ElevatorSetpoints.kLevel4),
+        m_coralSubSystem.reverseIntakeCommand(),
+        m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack),
+        m_coralSubSystem.waitUntilIntakeSafe(CoralSubsystemConstants.ArmSetpoints.kKnockBack)
+        )
+    );
+
+    NamedCommands.registerCommand("MoveToL4",
+    new SequentialCommandGroup(
+        m_coralSubSystem.setSetpointCommand(Setpoint.kLevel4),
+        m_coralSubSystem.waitUntilIntakeSafe(CoralSubsystemConstants.ArmSetpoints.kLevel3)
+    ));
+
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
   // The driver's controller
@@ -153,6 +195,11 @@ public class RobotContainer {
 
     // Start Button -> Zero swerve heading
     m_driverController.start().onTrue(m_robotDrive.zeroHeadingCommand());
+
+    // Right Bumper -> Enable Slow Mode While Held
+    m_driverController.rightBumper().whileTrue(
+    new RunCommand(() -> m_robotDrive.setSlowMode(true), m_robotDrive)
+    ).onFalse(new InstantCommand(() -> m_robotDrive.setSlowMode(false)));
     
 
     // Operator Controller

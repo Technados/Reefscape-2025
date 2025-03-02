@@ -195,6 +195,12 @@ public enum Alignment {
         pose);
   }
 
+  private boolean slowMode = false; // Boolean flag to track slow mode
+
+public void setSlowMode(boolean enable) {
+    slowMode = enable;
+}
+
   /**
    * Method to drive the robot using joystick info.
    *
@@ -206,10 +212,14 @@ public enum Alignment {
   public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
 
     SmartDashboard.putBoolean("Field Relative", fieldRelative);
+    SmartDashboard.putBoolean("Slow Mode", slowMode);
     // Convert the commanded speeds into the correct units for the drivetrain
-    double xSpeedDelivered = xSpeed * DriveConstants.kMaxSpeedMetersPerSecond;
-    double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond;
-    double rotDelivered = rot * DriveConstants.kMaxAngularSpeed;
+    // Apply speed reduction if slow mode is active
+    double speedFactor = slowMode ? DriveConstants.kSlowSpeedFactor : 1.0;
+
+    double xSpeedDelivered = xSpeed * DriveConstants.kMaxSpeedMetersPerSecond * speedFactor;
+    double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond * speedFactor;
+    double rotDelivered = rot * DriveConstants.kMaxAngularSpeed * speedFactor;
 
     var swerveModuleStates =
         DriveConstants.kDriveKinematics.toSwerveModuleStates(
@@ -289,7 +299,7 @@ public ChassisSpeeds getChassisSpeeds() {
       //PID Calc for reef alignment
       double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
       double strafePower = -limelightStrafePID.calculate(tx, strafeOffset);
-      double drivePower = -limelightStrafePID.calculate(ty, Constants.DesiredDistances.REEF_SCORING);
+      double drivePower = limelightStrafePID.calculate(ty, Constants.DesiredDistances.REEF_SCORING);
       // Apply a deadband to prevent constant micro-adjustments
 //if (Math.abs(targetHeading - getHeading()) < 1.5) { // If within 1.5 degrees, stop rotating
   //turnPower = 0;
@@ -405,6 +415,7 @@ public ChassisSpeeds getChassisSpeeds() {
   public double getTurnRate() {
     return -m_gyro.getRate() * (DriveConstants.kGyroReversed ? -1.0 : 1.0);
   }
+
 
 
 }
