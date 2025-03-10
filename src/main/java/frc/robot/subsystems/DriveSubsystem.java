@@ -14,8 +14,10 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.SerialPort;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.kauailabs.navx.frc.AHRS;
@@ -26,14 +28,22 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import frc.robot.Constants;
 import frc.robot.Constants.AprilTagIDs;
+import frc.robot.Constants.CoralSubsystemConstants.IntakeSetpoints;
 import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class DriveSubsystem extends SubsystemBase {
 
-  private static final double ALIGN_THRESHOLD = 1.0;
-  private static final double RANGE_THRESHOLD = 2.0; 
+  private static final double ALIGN_THRESHOLD = 0.2;  // Previously 0.5
+  private static final double RANGE_THRESHOLD = 0.1;  // Previously 1.0
+
+  private double applyMinPower(double power, double minThreshold) {
+    if (Math.abs(power) < minThreshold) {
+        return Math.signum(power) * minThreshold; // Apply a small minimum power
+    }
+    return power;
+}
   private final PIDController limelightTurnPID = new PIDController(
     Constants.LimelightPID.kP_turn, 
     Constants.LimelightPID.kI_turn, 
@@ -113,8 +123,9 @@ public enum Alignment {
 
       public DriveSubsystem() {
                   // set limelight alignment tolerance
-                  limelightTurnPID.setTolerance(ALIGN_THRESHOLD);
-                  limelightDistancePID.setTolerance(RANGE_THRESHOLD);
+                  limelightTurnPID.setTolerance(2.0);
+                  limelightDistancePID.setTolerance(1);
+                  limelightStrafePID.setTolerance(1);
 
           // Load RobotConfig
           try {
@@ -212,14 +223,14 @@ public void setSlowMode(boolean enable) {
 
     SmartDashboard.putBoolean("Field Relative", fieldRelative);
     SmartDashboard.putBoolean("Slow Mode", slowMode);
-    
     // Convert the commanded speeds into the correct units for the drivetrain
     // Apply speed reduction if slow mode is active
+    // Apply speed reduction factor
     double speedFactor = slowMode ? DriveConstants.kSlowSpeedFactor : 1.0;
 
     double xSpeedDelivered = xSpeed * DriveConstants.kMaxSpeedMetersPerSecond * speedFactor;
     double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond * speedFactor;
-    double rotDelivered = rot * DriveConstants.kMaxAngularSpeed * speedFactor;
+    double rotDelivered = rot * DriveConstants.kMaxAngularSpeed * speedFactor; // Ensure rotation is also scaled
 
     var swerveModuleStates =
         DriveConstants.kDriveKinematics.toSwerveModuleStates(
@@ -273,75 +284,125 @@ public ChassisSpeeds getChassisSpeeds() {
           m_rearRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
         });
   }
+
+  public Command moveFixedDistance(double xMeters, double yMeters) {
+    return new InstantCommand(() -> {
+        drive(xMeters, yMeters, 0, false); // Move in robot-relative space
+    }, this).andThen(new InstantCommand(() -> drive(0, 0, 0, false), this)); // Stop after movement
+}
+
+
+
   public void stopMovement() {
     drive(0, 0, 0, true); // Stop all movement
 }
   
-
 /**
-     * Align to the reef for scoring or algae removal.
-     */
-    public void alignToReef(Alignment alignment) {
-      limelight.getEntry("pipeline").setNumber(0); // Reef Scoring Pipeline
+ * Align to the reef for scoring or algae removal.
+ */
+private double lastValidTargetTime = 0; // Track when Limelight last updated
 
-      double tx = limelight.getEntry("tx").getDouble(0.0);
-      double ty = limelight.getEntry("ty").getDouble(0.0);
-      int tagID = (int) limelight.getEntry("tid").getDouble(-1);
+public void alignToReef(Alignment alignment) {
+    int pipeline = (alignment == Alignment.LEFT) ? 0 : 1;
+    limelight.getEntry("pipeline").setNumber(pipeline);
 
-      double targetHeading = getReefHeading(tagID);
-      if (Double.isNaN(targetHeading)) {
+    double tx = limelight.getEntry("tx").getDouble(0.0);
+    double ty = limelight.getEntry("ty").getDouble(0.0);
+    int tagID = (int) limelight.getEntry("tid").getDouble(-1);
+
+    // Ensure valid tag is detected
+    if (tagID == -1) {
         stopMovement();
-        return; // No valid tag detected, should prevent runaway movement behaviors
-      }
-
-      double strafeOffset = getStrafeOffset(alignment);
-
-      //PID Calc for reef alignment
-      double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
-      double strafePower = -limelightStrafePID.calculate(tx, strafeOffset);
-      double drivePower = limelightStrafePID.calculate(ty, Constants.DesiredDistances.REEF_SCORING);
-      // Apply a deadband to prevent constant micro-adjustments
-//if (Math.abs(targetHeading - getHeading()) < 1.5) { // If within 1.5 degrees, stop rotating
-  //turnPower = 0;
-
-      if (!limelightTurnPID.atSetpoint()) {
-          drive(0, 0, turnPower, false);
-          return;
-      }
-      drive(drivePower, strafePower, 0, false);
-
-      if (limelightTurnPID.atSetpoint() && limelightStrafePID.atSetpoint() && limelightDistancePID.atSetpoint()){
-        stopMovement();
-      }
+        setSlowMode(false);
+        SmartDashboard.putString("ReefAlign Status", "No AprilTag Detected");
+        return;
     }
 
+    // Ensure data is fresh (no stale readings)
+    lastValidTargetTime = Timer.getFPGATimestamp();
+    double currentTime = Timer.getFPGATimestamp();
+    if (currentTime - lastValidTargetTime > 0.5) { // If Limelight data is stale
+        stopMovement();
+        setSlowMode(false);
+        SmartDashboard.putString("ReefAlign Status", "Stale Data - Not Aligning");
+        return;
+    }
+
+    double targetHeading = getReefHeading(tagID);
+    if (Double.isNaN(targetHeading)) {
+        stopMovement();
+        setSlowMode(false);
+        SmartDashboard.putString("ReefAlign Status", "Invalid Target Heading");
+        return;
+    }
+
+    // ✅ Enable Slow Drive Mode
+    setSlowMode(true);
+
+    // 🔹 Step 1: Align Heading First
+    double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
+    boolean turnComplete = limelightTurnPID.atSetpoint();
+
+    if (!turnComplete) {
+        drive(0, 0, turnPower, false);
+        SmartDashboard.putString("ReefAlign Status", "Turning to Target");
+        return;
+    } else {
+        drive(0, 0, 0, false); // Stop turning
+    }
+
+    // 🔹 Step 2: Strafe Until Crosshair is Centered
+    double strafePower = -limelightStrafePID.calculate(tx, 0.0);
+    boolean strafeComplete = limelightStrafePID.atSetpoint();
+
+    // // ✅ Apply Deadband to prevent unnecessary micro-movements
+    if (Math.abs(strafePower) < 0.005) {
+        strafePower = 0;
+    }
+
+    if (!strafeComplete) {
+        drive(0, strafePower, 0, false);
+        SmartDashboard.putString("ReefAlign Status", "Strafing");
+        return;
+    }
+
+    // 🔹 Step 3: Move Forward to Reach the Reef
+    double drivePower = limelightDistancePID.calculate(ty, 0);
+    boolean driveComplete = limelightDistancePID.atSetpoint();
+    
+    if (!driveComplete) {
+        drive(drivePower, 0, 0, false);
+        SmartDashboard.putString("ReefAlign Status", "Driving Forward");
+        return;
+     }
+
+    // 🔹 Final Stop Condition - All Steps Complete
+    if (turnComplete && driveComplete && strafeComplete) {
+        stopMovement();
+        setSlowMode(false);
+        drive(0, 0, 0, true); // ✅ Ensures next movement is field-relative
+        SmartDashboard.putString("ReefAlign Status", "Alignment Complete");
+    }
+}
+  
 
   private double getReefHeading(int tagID) {
-      switch (tagID) {
-          case AprilTagIDs.A: return 0.0;
-          case AprilTagIDs.B: return 60.0;
-          case AprilTagIDs.C: return 120.0;
-          case AprilTagIDs.D: return 180.0;
-          case AprilTagIDs.E: return -120.0;
-          case AprilTagIDs.F: return -60.0;
-          case AprilTagIDs.BLUE_A: return 0.0;
-          case AprilTagIDs.BLUE_B: return 60.0;
-          case AprilTagIDs.BLUE_C: return 120.0;
-          case AprilTagIDs.BLUE_D: return 180.0;
-          case AprilTagIDs.BLUE_E: return -120.0;
-          case AprilTagIDs.BLUE_F: return -60.0;
-          default: return Double.NaN;
-      }
-  }
-
-  private double getStrafeOffset(Alignment alignment) {
-      switch (alignment) {
-          case LEFT: return -0.2;
-          case RIGHT: return 0.2;
-          default: return 0.0;
-      }
-  }
-
+    switch (tagID) {
+        case AprilTagIDs.A: return 0.0;
+        case AprilTagIDs.B: return 60.0;
+        case AprilTagIDs.C: return 120.0;
+        case AprilTagIDs.D: return (getHeading() > 0 ? 180.0 : -180.0);  // Ensures shortest turn
+        case AprilTagIDs.E: return -120.0;
+        case AprilTagIDs.F: return -60.0;
+        case AprilTagIDs.BLUE_A: return 0.0;
+        case AprilTagIDs.BLUE_B: return 60.0;
+        case AprilTagIDs.BLUE_C: return 120.0;
+        case AprilTagIDs.BLUE_D: return (getHeading() > 0 ? 180.0 : -180.0);  // Same for blue alliance
+        case AprilTagIDs.BLUE_E: return -120.0;
+        case AprilTagIDs.BLUE_F: return -60.0;
+        default: return Double.NaN;
+    }
+}
   // public void alignToSubstation() {
   //     int tagID = (int) limelight.getEntry("tid").getDouble(-1);
   //     double targetHeading = (tagID == 6 || tagID == 19) ? 125.0 : (tagID == 17 || tagID == 8) ? -125.0 : Double.NaN;

@@ -12,17 +12,20 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Configs;
 import frc.robot.Constants.AlgaeSubsystemConstants;
+import frc.robot.Constants.CoralSubsystemConstants.IntakeSetpoints;
 
 
 public class AlgaeSubsystem extends SubsystemBase {
 
+  private boolean hasGamePiece = false; // Tracks if a game piece is detected
+  
   // Initialize intake SPARK. We will use open loop control for this so we don't need a closed loop
   // controller like above.
   private SparkMax intakeMotor =
       new SparkMax(AlgaeSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
 
   // Member variables for subsystem state management
-  private boolean stowWhenIdle = true;
+  // private boolean stowWhenIdle = true;
 
   public AlgaeSubsystem() {
     /*
@@ -41,68 +44,50 @@ public class AlgaeSubsystem extends SubsystemBase {
         PersistMode.kPersistParameters);
 
   }
+  private void setIntakePower(double power) {
+    if (hasGamePiece && power == 0.0) {
+        intakeMotor.set(AlgaeSubsystemConstants.IntakeSetpoints.kHold); // Apply hold power
+    } else {
+        intakeMotor.set(power);
+    }
+}
 
-  /**
-   * Command to run the algae intake. This will extend the arm to its "down" position and run the
-   * motor at its "forward" power to intake the ball.
-   *
-   * <p>This will also update the idle state to hold onto the ball when this command is not running.
-   */
-  public Command runIntakeCommand() {
-    return this.run(
-        () -> {
-          stowWhenIdle = false;
-          setIntakePower(AlgaeSubsystemConstants.IntakeSetpoints.kForward);
-          //setIntakePosition(AlgaeSubsystemConstants.ArmSetpoints.kDown);
-        });
+    /**
+     * Command to run the algae intake forward.
+     */
+    public Command runIntakeCommand() {
+      return this.startEnd(
+          () -> {
+              hasGamePiece = false; // Reset when running intake
+              setIntakePower(AlgaeSubsystemConstants.IntakeSetpoints.kForward);
+          },
+          () -> {
+              hasGamePiece = true; // Assume a piece is held after stopping
+              setIntakePower(0.0);
+          }
+      );
   }
 
   /**
-   * Command to run the algae intake in reverse.
-   *
-   * 
+   * Command to reverse the algae intake.
    */
   public Command reverseIntakeCommand() {
-    return this.run(
-        () -> {
-          stowWhenIdle = true;
-          setIntakePower(AlgaeSubsystemConstants.IntakeSetpoints.kReverse);
-        });
-  }
-
-  /** Command to force the subsystem into its "stow" state. */
-  public Command stowCommand() {
-    return this.runOnce(
-        () -> {
-          stowWhenIdle = true;
-        });
-  }
-
-  /**
-   * Command to run when the intake is not actively running. When in the "hold" state, the intake
-   * will stay in the "hold" position and run the motor at its "hold" power to hold onto the ball.
-   * When in the "stow" state, the intake will stow the arm in the "stow" position and stop the
-   * motor.
-   */
-  public Command idleCommand() {
-    return this.run(
-        () -> {
-          if (stowWhenIdle) {
-            setIntakePower(0.0);
-          } else {
-            setIntakePower(AlgaeSubsystemConstants.IntakeSetpoints.kHold);
+      return this.startEnd(
+          () -> {
+              hasGamePiece = false; // Releasing the game piece
+              setIntakePower(AlgaeSubsystemConstants.IntakeSetpoints.kReverse);
+          },
+          () -> {
+              hasGamePiece = false; // Ensure holding power does not apply after ejecting
+              setIntakePower(0.0);
           }
-        });
+      );
   }
-
-  /** Set the intake motor power in the range of [-1, 1]. */
-  private void setIntakePower(double power) {
-    intakeMotor.set(power);
-  }
-
+  
   @Override
   public void periodic() {
-
-    SmartDashboard.putNumber("Algae/Intake/Applied Output", intakeMotor.getAppliedOutput());
+      double current = intakeMotor.getOutputCurrent();
+      hasGamePiece = (current > 10.0); // Adjust threshold as needed
+      SmartDashboard.putNumber("Algae/Intake Current", current);
   }
 }

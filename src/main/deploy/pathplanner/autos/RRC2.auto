@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "BLD"
+                  "pathName": "RRC"
                 }
               },
               {
@@ -26,7 +26,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "DL"
+            "pathName": "CL"
           }
         },
         {
@@ -45,7 +45,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BackDL"
+            "pathName": "CLF"
           }
         },
         {
@@ -53,11 +53,55 @@
           "data": {
             "name": "CoralFeed"
           }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 3.0
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "FEEDCR"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "MoveToL4"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ScoreL4"
+          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "D",
+  "folder": "C",
   "choreoAuto": false
 }

@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "BMD"
+                  "pathName": "RLD"
                 }
               },
               {
@@ -21,12 +21,6 @@
                 }
               }
             ]
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "DR"
           }
         },
         {
@@ -45,7 +39,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BackDR"
+            "pathName": "BackDL"
           }
         },
         {

@@ -16,12 +16,12 @@
     },
     {
       "anchor": {
-        "x": 1.23825,
-        "y": 7.066999999999999
+        "x": 1.209,
+        "y": 7.077
       },
       "prevControl": {
-        "x": 1.472576687000503,
-        "y": 6.979873633385935
+        "x": 1.443326687000503,
+        "y": 6.989873633385936
       },
       "nextControl": null,
       "isLocked": false,
@@ -48,7 +48,7 @@
   "folder": "Feeders",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -119.99999999999999
+    "rotation": 59.99999999999999
   },
   "useDefaultConstraints": true
 }

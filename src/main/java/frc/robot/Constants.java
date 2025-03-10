@@ -25,22 +25,26 @@ public final class Constants {
     public static final int kElevatorMotorCanId = 10;
     public static final int kArmMotorCanId = 11;
     public static final int kIntakeMotorCanId = 9;
+    public static final int kFrontIntakeMotorCanId = 13;
 
     public static final class ElevatorSetpoints {
-      public static final int kFeederStation = 10;
+      public static final int kFeederStation = 22;
       public static final int kLevel1 = 0;
       public static final int kLevel2 = 0;
       public static final int kLevel3 = 40;
-      public static final int kLevel4 = 150;
+      public static final int kLevelA = 80;
+      public static final int kLevel4 = 148;
     }
 
     public static final class ArmSetpoints {
-      public static final double kFeederStation = -5.25;
-      public static final double kLevel1 = 0;
-      public static final double kLevel2 = 15;
-      public static final double kLevel3 = 16.75;
-      public static final double kLevel4 = 19.5;
-      public static final double kKnockBack = 20;
+      public static final double kFeederStation = -1.25;
+      public static final double kLevel1 = 1.25;
+      public static final double kLevel2 = 16;
+      public static final double kLevel3 = 17.75;
+      public static final double kLevel4 = 19;
+      public static final double kKnockBack = 20.5;
+      public static final double kAlgaeLow = 5.5;
+      public static final double kAlgaeHigh = 5.5;
     }
 
     public static final double kArmDegreesPerEncoderTick = 0.01964; // based on 20:1 planetary AND a 22t --> 48t chain reduction
@@ -50,6 +54,11 @@ public final class Constants {
       public static final double kReverse = 0.5;
     }
 
+    public static final class FrontIntakeSetpoints {
+      public static final double kForward = 0.40;
+      public static final double kReverse = -0.40;
+    }
+
     public static final double kGravityFF = 0.10; //adjust after testing
   }
 
@@ -57,14 +66,14 @@ public final class Constants {
     public static final int kIntakeMotorCanId = 12;
 
     public static final class IntakeSetpoints{
-      public static final double kForward = 0.5;
-      public static final double kReverse = -0.5;
-      public static final double kHold = 0.25;
+      public static final double kForward = 0.75;
+      public static final double kReverse = -0.75;
+      public static final double kHold = 0.35;
     }
   }
   public static final class ClimberSubsystemConstants {
-    public static final int kClimbMotorCanId = 13;
-    public static final int kClimbArmMotorCanId = 14;
+    public static final int kClimbMotorCanId = 14;
+    public static final int kClimbArmMotorCanId = 15;
 
     public static final class ArmSetpoints {
       public static final double kStow = 18.5;
@@ -113,26 +122,27 @@ public final class Constants {
 public static final class LimelightPID {
   // 🎯 PID Gains for Reef Targeting
 
-    public static final double kP_turn = 0.006; // Reduce P to slow rotation response
-    public static final double kI_turn = 0.000;
-    public static final double kD_turn = 0.00; // Keep small D to prevent oscillation
+  public static final double kP_turn = 0.15;   // Previously 0.1
+  public static final double kI_turn = 0.000;
+  public static final double kD_turn = 0.01;   // New (small D gain)
 
-  public static final double kP_distance = 0.005;  // Adjust as needed
+  public static final double kP_distance = 0.2; // Previously 0.15
   public static final double kI_distance = 0.0;
-  public static final double kD_distance = 0.00;
+  public static final double kD_distance = 0.01; // New (small D gain)
 
-  public static final double kP_strafe = 0.003;  // 🎯 PID for left/right strafing (Adjust as needed)
+  public static final double kP_strafe = 0.2;  // Previously 0.15
   public static final double kI_strafe = 0.0;
-  public static final double kD_strafe = 0.00;
+  public static final double kD_strafe = 0.01; // New (small D gain)
+
 }
 
 
   public static final class DriveConstants {
     // Driving Parameters - Note that these are not the maximum capable speeds of
     // the robot, rather the allowed maximum speeds
-    public static final double kMaxSpeedMetersPerSecond = 3;
+    public static final double kMaxSpeedMetersPerSecond = 2.5;
     public static final double kMaxAngularSpeed = 2 * Math.PI; // radians per second
-    public static final double kSlowSpeedFactor = 0.2; // Slow mode speed factor (40% of normal speed)
+    public static final double kSlowSpeedFactor = 0.30; // Slow mode speed factor (40% of normal speed)
 
     // Chassis configuration
     public static final double kTrackWidth = Units.inchesToMeters(23.5);

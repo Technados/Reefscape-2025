@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.CoralSubsystemConstants;
 import frc.robot.Constants.OIConstants;
+import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.AlgaeSubsystem;
 import frc.robot.subsystems.CoralSubsystem;
 import frc.robot.subsystems.CoralSubsystem.Setpoint;
@@ -27,6 +28,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 
 
 /*
@@ -40,6 +42,7 @@ public class RobotContainer {
   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
   private final CoralSubsystem m_coralSubSystem = new CoralSubsystem();
   private final AlgaeSubsystem m_algaeSubsystem = new AlgaeSubsystem();
+  private final ClimberSubsystem m_ClimberSubsystem = new ClimberSubsystem();
   // private final ClimberSubsystem m_climberSubsystem = new ClimberSubsystem();
 
   //private final DriveSubsystem driveSubsystem = new DriveSubsystem();
@@ -48,6 +51,8 @@ public class RobotContainer {
 
 
   // create autoChooser
+  //private final SendableChooser<String> BlueautoChooser = new SendableChooser<>();
+  //private final SendableChooser<String> RedautoChooser = new SendableChooser<>();
   private final SendableChooser<String> autoChooser = new SendableChooser<>();
 
   // Commands for PathPlanner
@@ -57,8 +62,18 @@ public class RobotContainer {
     //NamedCommands.registerCommand("CoralPositionL3", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel3));
     //NamedCommands.registerCommand("CoralPositionL4", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel4));
     //NamedCommands.registerCommand("KnockBack", m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack));
-    NamedCommands.registerCommand("RunIntake", m_coralSubSystem.runIntakeCommand().withTimeout(1.0));
-    //NamedCommands.registerCommand("ScoreCoral", m_coralSubSystem.reverseIntakeCommand());
+    NamedCommands.registerCommand("Intake", m_coralSubSystem.runIntakeCommand().withTimeout(1.0));
+    //NamedCommands.registerCommand("Outake", m_coralSubSystem.reverseIntakeCommand());
+
+
+    // NamedCommands.registerCommand("Intake",
+    // new ParallelCommandGroup(
+
+    //     //m_coralSubSystem.waitUntilElevatorInPosition(CoralSubsystemConstants.ElevatorSetpoints.kFeederStation),
+    //     m_coralSubSystem.runFrontIntakeCommand(),
+    //     m_coralSubSystem.runIntakeCommand()
+    //     )
+    // );
 
     NamedCommands.registerCommand("ScoreL2",
     new SequentialCommandGroup(
@@ -145,18 +160,43 @@ public class RobotContainer {
             m_robotDrive));
 
     // Set the ball intake to in/out when not running based on internal state
-    m_algaeSubsystem.setDefaultCommand(m_algaeSubsystem.idleCommand());
+    // m_algaeSubsystem.setDefaultCommand(m_algaeSubsystem.idleCommand());
 
     // register auto options to the shuffleboard           
     autoChooser.addOption("none", null);
     autoChooser.addOption("1Meter", "1Meter");
     autoChooser.addOption("180", "180");
     autoChooser.addOption("Test Path", "Test Path");
-    autoChooser.addOption("BMDR3", "BMDR3");
-    autoChooser.addOption("BackMiddle", "BackMiddle");
+ 
+    /////////////////////////////////////////////////////////////////////////////////    
+   
+    //autoChooser.addOption("none", null);
+    autoChooser.addOption("BRDR1", "BRDR1");
+    autoChooser.addOption("BRD1", "BRD1");
+    autoChooser.addOption("BRE2", "BRE2");
+    autoChooser.addOption("BME2", "BME2");
+    autoChooser.addOption("BLE2", "BLE2");
+    autoChooser.addOption("BRF2", "BRF2");
+    autoChooser.addOption("BMF2", "BMF2");
+    autoChooser.addOption("BLF2", "BLF2");
+ 
+    ////////////////////////////////////////////////////////////////////////////////// 
+    
+    //autoChooser.addOption("none", null);
+    autoChooser.addOption("RLDR1", "RLDR1");
+    autoChooser.addOption("RLD1", "RLD1");
+    autoChooser.addOption("RMB2", "RMB2");
+    autoChooser.addOption("RLB2", "RLB2");
+    autoChooser.addOption("RRB2", "RRB2");
+    autoChooser.addOption("RLC2", "RLC2");
+    autoChooser.addOption("RMC2", "RMC2");
+    autoChooser.addOption("RRC2", "RRC2");
+    
     
 
     // Creating a new shuffleboard tab and adding the autoChooser
+    //Shuffleboard.getTab("PathPlanner Autonomous").add(BlueautoChooser).withWidget(BuiltInWidgets.kComboBoxChooser);
+    //Shuffleboard.getTab("PathPlanner Autonomous").add(RedautoChooser).withWidget(BuiltInWidgets.kComboBoxChooser);
     Shuffleboard.getTab("PathPlanner Autonomous").add(autoChooser).withWidget(BuiltInWidgets.kComboBoxChooser);
   }
 
@@ -174,7 +214,16 @@ public class RobotContainer {
     
     // Hole left bumper to run intake and align to left/right substation
     m_driverController.leftBumper().whileTrue(m_coralSubSystem.runIntakeCommand());
-    //.alongWith(m_robotDrive.alignToSubstationCommand()));
+
+    // Run Algae motor w/ 'a' button and reverse with 'b' button (for now)
+    m_driverController.a().whileTrue(m_algaeSubsystem.runIntakeCommand());
+    m_driverController.b().whileTrue(m_algaeSubsystem.reverseIntakeCommand());
+
+    // Driver press 'x' to move arm and elevator to low algae removal position
+    m_driverController.x().onTrue(m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeLow));
+    // Driver press 'y' to move arm and elevator to high algae removal position
+    m_driverController.y().onTrue(m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeHigh));
+  
 
     // Start Button -> Zero swerve heading
     m_driverController.start().onTrue(m_robotDrive.zeroHeadingCommand());
@@ -183,23 +232,24 @@ public class RobotContainer {
     m_driverController.rightBumper()
     .whileTrue(new InstantCommand(() -> m_robotDrive.setSlowMode(true)))
     .onFalse(new InstantCommand(() -> m_robotDrive.setSlowMode(false)));
-    
+
+
 
     // Operator Controller
     // Reef Scoring Alignments - d-pad aligns left, right, or center to reef sides using apriltag
-    m_operatorController.povLeft().whileTrue(m_robotDrive.alignToReefCommand(Alignment.LEFT));
-    //.onFalse(new InstantCommand(() -> m_robotDrive.stopMovement())); // Stops on release
-    m_operatorController.povRight().whileTrue(m_robotDrive.alignToReefCommand(Alignment.RIGHT));
-    //.onFalse(new InstantCommand(() -> m_robotDrive.stopMovement())); // Stops on release
-    m_operatorController.povUp().whileTrue(m_robotDrive.alignToReefCommand(Alignment.CENTER));
-    //.onFalse(new InstantCommand(() -> m_robotDrive.stopMovement())); // Stops on release
 
-    // Left Bumper -> Run coral intake
-    // Right Bumper -> Run coral intake in reverse
-   // m_operatorController.rightBumper().whileTrue(m_coralSubSystem.reverseIntakeCommand());
-    // B Button -> Elevator/Arm to human player position, set ball intake to stow
-    // when idle
-    m_operatorController.b().onTrue(m_coralSubSystem.setSetpointCommand(Setpoint.kFeederStation).alongWith(m_algaeSubsystem.stowCommand()));
+    // D-pad Left -> Align to reef using pipeline 0 (LEFT alignment)
+    m_operatorController.povLeft().whileTrue(m_robotDrive.alignToReefCommand(Alignment.LEFT))
+    .onFalse(new InstantCommand(() -> m_robotDrive.setSlowMode(false))); // ✅ Release slow mode
+
+    // D-pad Right -> Align to reef using pipeline 1 (RIGHT alignment)
+    m_operatorController.povRight().whileTrue(m_robotDrive.alignToReefCommand(Alignment.RIGHT))
+    .onFalse(new InstantCommand(() -> m_robotDrive.setSlowMode(false))); // ✅ Release slow mode
+
+
+
+    // B Button -> Elevator/Arm to human player position
+    m_operatorController.b().onTrue(m_coralSubSystem.setSetpointCommand(Setpoint.kFeederStation));
     
     // START Button -> Elevator/Arm to level 1 position
     m_operatorController.start().onTrue(m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1));
@@ -209,6 +259,9 @@ public class RobotContainer {
 
     // X Button -> Elevator/Arm to level 3 position
     m_operatorController.x().onTrue(m_coralSubSystem.setSetpointCommand(Setpoint.kLevel3));
+    
+    // Operator option to run coral intake
+    m_operatorController.rightBumper().whileTrue(m_coralSubSystem.runIntakeCommand());
 
     // Y Button -> Elevator/Arm to level 4 position
     m_operatorController.y().onTrue(m_coralSubSystem.setSetpointCommand(Setpoint.kLevel4));
@@ -226,17 +279,6 @@ public class RobotContainer {
         //.andThen(m_coralSubSystem.waitUntilIntakeSafe(CoralSubsystemConstants.ArmSetpoints.kKnockBack)) // Wait for safe position
         .andThen(() -> m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1).schedule()) // Lower Elevator first
     );
-
-
-    // Right Trigger -> Run ball intake, set to leave out when idle
-   // m_operatorController
-   //     .rightTrigger(OIConstants.kTriggerButtonThreshold)
-   //     .whileTrue(m_algaeSubsystem.runIntakeCommand());
-
-    // Left Trigger -> Run ball intake in reverse, set to stow when idle
-    //m_operatorController
-    //   .leftTrigger(OIConstants.kTriggerButtonThreshold)
-  // .whileTrue(m_algaeSubsystem.reverseIntakeCommand());
 
   }
 

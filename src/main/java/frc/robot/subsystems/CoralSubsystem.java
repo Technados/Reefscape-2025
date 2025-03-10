@@ -17,6 +17,7 @@ import frc.robot.Configs;
 import frc.robot.Constants.CoralSubsystemConstants;
 import frc.robot.Constants.CoralSubsystemConstants.ArmSetpoints;
 import frc.robot.Constants.CoralSubsystemConstants.ElevatorSetpoints;
+import frc.robot.Constants.CoralSubsystemConstants.FrontIntakeSetpoints;
 import frc.robot.Constants.CoralSubsystemConstants.IntakeSetpoints;
 import edu.wpi.first.wpilibj.DigitalInput;
 
@@ -28,7 +29,9 @@ public class CoralSubsystem extends SubsystemBase {
     kLevel2,
     kLevel3,
     kLevel4,
-    kKnockBack;
+    kKnockBack,
+    kAlgaeLow,
+    kAlgaeHigh;
   }
 
   // Initialize arm SPARK. We will use MAXMotion position control for the arm, so we also need to
@@ -51,6 +54,9 @@ public class CoralSubsystem extends SubsystemBase {
   private SparkFlex intakeMotor =
       new SparkFlex(CoralSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
 
+   private SparkMax frontIntakeMotor =
+      new SparkMax(CoralSubsystemConstants.kFrontIntakeMotorCanId, MotorType.kBrushless);
+
   // Member variables for subsystem state management
   private boolean wasResetByButton = false;
   private boolean wasResetByLimit = false;
@@ -58,8 +64,11 @@ public class CoralSubsystem extends SubsystemBase {
   private double elevatorCurrentTarget = ElevatorSetpoints.kLevel1;
 
   // Elevator Limit Switch
-  private DigitalInput elevatorLimitSwitch = new DigitalInput(0);
+  //private DigitalInput elevatorLimitSwitch = new DigitalInput(6);
 
+  // safe elevator slow down zone near limits for dynamic speed reduction approaching limits
+  private static final double kElevatorSlowZone = 10.0; //encoder ticks before top/bottom to start slow zone 
+  private static final double kElevatorSlowSpeedFactor = 0.4; // 40% of full speed when near limit
 
   public CoralSubsystem() {
     /*
@@ -84,6 +93,11 @@ public class CoralSubsystem extends SubsystemBase {
         Configs.CoralSubsystem.intakeConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
+    frontIntakeMotor.configure(
+          Configs.CoralSubsystem.frontIntakeConfig,
+          ResetMode.kResetSafeParameters,
+          PersistMode.kPersistParameters);
+   
 
     // Zero arm and elevator encoders on initialization
     armEncoder.setPosition(0);
@@ -102,6 +116,18 @@ public class CoralSubsystem extends SubsystemBase {
     double armAngleDegrees = armEncoder.getPosition() * CoralSubsystemConstants.kArmDegreesPerEncoderTick;
     double armAngleRadians = Math.toRadians(armAngleDegrees);
 
+    // Calculate how close we are to limits
+    double elevatorPosition = elevatorEncoder.getPosition();
+    boolean nearTop = (CoralSubsystemConstants.ElevatorSetpoints.kLevel4 - elevatorPosition) < kElevatorSlowZone;
+    boolean nearBottom = elevatorPosition < kElevatorSlowZone;
+
+    // Calculate speed reduction if near limits
+    double speedFactor = (nearTop || nearBottom) ? kElevatorSlowSpeedFactor : 1.0;
+
+    // Apply dynamic speed reduction by adjusting target dynamically
+    double adjustedElevatorTarget = elevatorPosition + (elevatorCurrentTarget - elevatorPosition) * speedFactor;
+
+
     // Calculate Gravity Feedforward (GravityFF)
     double gravityFFValue = CoralSubsystemConstants.kGravityFF * Math.cos(armAngleRadians);
 
@@ -118,7 +144,7 @@ public class CoralSubsystem extends SubsystemBase {
     // Returning from a scoring position (elevator down first, then arm)
     else {
         // Move elevator down first
-        elevatorClosedLoopController.setReference(elevatorCurrentTarget,ControlType.kMAXMotionPositionControl);
+        elevatorClosedLoopController.setReference(adjustedElevatorTarget,ControlType.kMAXMotionPositionControl);
 
         // Wait for elevator to lower before moving arm back
         if (Math.abs(elevatorEncoder.getPosition() - elevatorCurrentTarget) < 2.0) { 
@@ -128,16 +154,16 @@ public class CoralSubsystem extends SubsystemBase {
 }
 
   /** Zero the elevator encoder when the limit switch is pressed. */
-  private void zeroElevatorOnLimitSwitch() {
-    if (!wasResetByLimit && !elevatorLimitSwitch.get()) {
-      // Zero the encoder only when the limit switch is switches from "unpressed" to "pressed" to
-      // prevent constant zeroing while pressed
-      elevatorEncoder.setPosition(0);
-      wasResetByLimit = true;
-    } else if (elevatorLimitSwitch.get()) {
-      wasResetByLimit = false;
-    }
-  }
+  // private void zeroElevatorOnLimitSwitch() {
+  //   if (!wasResetByLimit && !elevatorLimitSwitch.get()) {
+  //     // Zero the encoder only when the limit switch is switches from "unpressed" to "pressed" to
+  //     // prevent constant zeroing while pressed
+  //     elevatorEncoder.setPosition(0);
+  //     wasResetByLimit = true;
+  //   } else if (elevatorLimitSwitch.get()) {
+  //     wasResetByLimit = false;
+  //   }
+  // }
 
   /** Zero the arm and elevator encoders when the user button is pressed on the roboRIO. */
   private void zeroOnUserButton() {
@@ -155,6 +181,10 @@ public class CoralSubsystem extends SubsystemBase {
   /** Set the intake motor power in the range of [-1, 1]. */
   private void setIntakePower(double power) {
     intakeMotor.set(power);
+  }
+
+  private void setFrontIntakePower(double power) {
+    frontIntakeMotor.set(power);
   }
 
   /**
@@ -189,6 +219,14 @@ public class CoralSubsystem extends SubsystemBase {
               armCurrentTarget = ArmSetpoints.kKnockBack;
               elevatorCurrentTarget = ElevatorSetpoints.kLevel1;
               break;
+            case kAlgaeLow: // NEW CASE ADDED
+              armCurrentTarget = ArmSetpoints.kAlgaeLow;
+              elevatorCurrentTarget = ElevatorSetpoints.kLevel1;
+              break;
+            case kAlgaeHigh: // NEW CASE ADDED
+              armCurrentTarget = ArmSetpoints.kAlgaeHigh;
+              elevatorCurrentTarget = ElevatorSetpoints.kLevelA;
+              break;
           }
         });
   }
@@ -203,13 +241,39 @@ public class CoralSubsystem extends SubsystemBase {
         .withTimeout(0.50);
   }
 
+  public Command reverseFrontIntakeCommand() {
+    return this.startEnd(
+        () -> this.setFrontIntakePower(FrontIntakeSetpoints.kReverse), () -> this.setFrontIntakePower(0.0))
+        .withTimeout(0.50);
+  }
+
   /**
    * Command to reverses the intake motor. When the command is interrupted, e.g. the button is
    * released, the motor will stop.
    */
   public Command runIntakeCommand() {
     return this.startEnd(
-        () -> this.setIntakePower(IntakeSetpoints.kForward), () -> this.setIntakePower(0.0));    
+        () -> {
+            this.setIntakePower(IntakeSetpoints.kForward);
+            this.setFrontIntakePower(FrontIntakeSetpoints.kForward);
+        }, 
+        () -> {
+            this.setIntakePower(0.0);
+            this.setFrontIntakePower(0.0);
+        }
+    );
+}
+
+
+  public Command runFrontIntakeCommand() {
+    return this.startEnd(
+        () -> this.setFrontIntakePower(IntakeSetpoints.kForward), () -> this.setFrontIntakePower(0.0));    
+  }
+  
+  public Command shortRunFrontIntakeCommand() {
+    return this.startEnd(
+        () -> this.setFrontIntakePower(IntakeSetpoints.kForward), () -> this.setFrontIntakePower(0.0))   
+        .withTimeout(0.50); 
   }
 
   public Command waitUntilIntakeSafe(double armCurrentTarget) {
@@ -224,16 +288,16 @@ public class CoralSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     moveToSetpoint();
-    zeroElevatorOnLimitSwitch();
+    //zeroElevatorOnLimitSwitch(); 
     zeroOnUserButton();
 
   
     // Display subsystem values
-    SmartDashboard.putNumber("Coral/Arm/Target Position", armCurrentTarget);
-    SmartDashboard.putNumber("Coral/Arm/Actual Position", armEncoder.getPosition());
-    SmartDashboard.putNumber("Coral/Elevator/Target Position", elevatorCurrentTarget);
-    SmartDashboard.putNumber("Coral/Elevator/Actual Position", elevatorEncoder.getPosition());
-    SmartDashboard.putNumber("Coral/Intake/Applied Output", intakeMotor.getAppliedOutput());
+    SmartDashboard.putNumber("Arm Target Position", armCurrentTarget);
+    SmartDashboard.putNumber("Actual Position", armEncoder.getPosition());
+    SmartDashboard.putNumber("Elevator Target Position", elevatorCurrentTarget);
+    SmartDashboard.putNumber("Elevator Actual Position", elevatorEncoder.getPosition());
+    SmartDashboard.putNumber("Coral Intake Applied Output", intakeMotor.getAppliedOutput());
   
   }
 }
