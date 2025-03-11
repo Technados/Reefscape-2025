@@ -47,7 +47,7 @@ public final class Constants {
       public static final double kAlgaeHigh = 5.5;
     }
 
-    public static final double kArmDegreesPerEncoderTick = 0.01964; // based on 20:1 planetary AND a 22t --> 48t chain reduction
+    public static final double kArmDegreesPerEncoderTick = 8.26; // based on 20:1 planetary AND a 22t --> 48t chain reduction
 
     public static final class IntakeSetpoints {
       public static final double kForward = -0.5;
@@ -59,7 +59,15 @@ public final class Constants {
       public static final double kReverse = -0.40;
     }
 
-    public static final double kGravityFF = 0.10; //adjust after testing
+    // Gravity Feedforward
+    public static final double kArmGravityFF = 0.65; // Arm feedforward (adjust as tuned)
+    public static final double kElevatorGravityFF = 0.15; // Elevator feedforward (adjust as tuned)
+
+    // Slow zone behavior
+    public static final double kElevatorSlowZone = 10.0; // Number of ticks from limit to start slowing
+    public static final double kElevatorSlowSpeedFactor = 0.4; // 40% of speed when inside slow zone
+
+
   }
 
   public static final class AlgaeSubsystemConstants {

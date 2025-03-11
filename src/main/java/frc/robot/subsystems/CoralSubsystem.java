@@ -105,53 +105,129 @@ public class CoralSubsystem extends SubsystemBase {
 
   }
 
+/**
+ * Drive the arm and elevator motors to their respective setpoints. 
+ * Applies smooth slow zone near both elevator limits, adds gravity feedforward,
+ * and maintains arm/elevator sequencing logic.
+ */
+private void moveToSetpoint() {
+  // ========================
+  // Arm Feedforward Handling
+  // ========================
+  // Convert arm encoder to degrees and apply 90-degree offset for proper cos(angle)
+  double armAngleDegrees = armEncoder.getPosition() * CoralSubsystemConstants.kArmDegreesPerEncoderTick;
+  double armAngleRadians = Math.toRadians(armAngleDegrees - 90); // Offset so arm hanging down is cos(90)=0
+
+  // Gravity Feedforward for Arm
+  double gravityFFValue = CoralSubsystemConstants.kArmGravityFF * Math.cos(armAngleRadians);
+
+  // ========================
+  // Elevator Slow Zone & FF
+  // ========================
+  double elevatorPosition = elevatorEncoder.getPosition();
+  double distanceToTarget = Math.abs(elevatorCurrentTarget - elevatorPosition);
+  double speedFactor = 1.0; // Default full speed
+
+  // Smoothly scale down speed when within slow zone range
+  if (distanceToTarget < CoralSubsystemConstants.kElevatorSlowZone) {
+      // Linear interpolation: smoothly reduces speed as it nears limit
+      speedFactor = CoralSubsystemConstants.kElevatorSlowSpeedFactor + 
+          (1 - CoralSubsystemConstants.kElevatorSlowSpeedFactor) * (distanceToTarget / CoralSubsystemConstants.kElevatorSlowZone);
+  }
+
+  // Adjusted elevator target based on smooth slow zone factor
+  double adjustedElevatorTarget = elevatorPosition + (elevatorCurrentTarget - elevatorPosition) * speedFactor;
+
+  // ========================
+  // Arm and Elevator Sequencing
+  // ========================
+  if (armCurrentTarget > CoralSubsystemConstants.ArmSetpoints.kLevel1) {
+      // ------------------
+      // If raising (scoring position), move arm first
+      // ------------------
+      armController.setReference(
+          armCurrentTarget,
+          ControlType.kMAXMotionPositionControl,
+          ClosedLoopSlot.kSlot0,
+          gravityFFValue // Arm Gravity Feedforward
+      );
+
+      // Once arm is in position, move elevator using adjusted target and elevator FF
+      if (Math.abs(armEncoder.getPosition() - armCurrentTarget) < 0.5) {
+          elevatorClosedLoopController.setReference(
+              adjustedElevatorTarget, // ✅ Slow zone applied target
+              ControlType.kMAXMotionPositionControl,
+              ClosedLoopSlot.kSlot0,
+              CoralSubsystemConstants.kElevatorGravityFF // Elevator Gravity Feedforward
+          );
+      }
+
+  } else {
+      // ------------------
+      // If lowering (return to intake/rest), move elevator first
+      // ------------------
+      elevatorClosedLoopController.setReference(
+          adjustedElevatorTarget, // ✅ Slow zone applied target
+          ControlType.kMAXMotionPositionControl,
+          ClosedLoopSlot.kSlot0,
+          CoralSubsystemConstants.kElevatorGravityFF // Elevator Gravity Feedforward
+      );
+
+      // Once elevator is mostly down, retract arm with gravity FF
+      if (Math.abs(elevatorEncoder.getPosition() - elevatorCurrentTarget) < 2.0) {
+          armController.setReference(
+              armCurrentTarget,
+              ControlType.kMAXMotionPositionControl,
+              ClosedLoopSlot.kSlot0,
+              gravityFFValue // Arm Gravity Feedforward
+          );
+      }
+  }
+}
 
   /**
    * Drive the arm and elevator motors to their respective setpoints. This will use MAXMotion
    * position control which will allow for a smooth acceleration and deceleration to the mechanisms'
    * setpoints.
    */
-  private void moveToSetpoint() {
-    // Convert encoder position to real-world arm angle in degrees
-    double armAngleDegrees = armEncoder.getPosition() * CoralSubsystemConstants.kArmDegreesPerEncoderTick;
-    double armAngleRadians = Math.toRadians(armAngleDegrees);
+//   private void moveToSetpoint() {
+//     // Convert encoder position to real-world arm angle in degrees
+//     double armAngleDegrees = armEncoder.getPosition() * CoralSubsystemConstants.kArmDegreesPerEncoderTick;
+//     double armAngleRadians = Math.toRadians(armAngleDegrees-90); // offset so down is 90 degrees instead of 0
+//     double gravityFFValue = CoralSubsystemConstants.kArmGravityFF * Math.cos(armAngleRadians);
 
-    // Calculate how close we are to limits
-    double elevatorPosition = elevatorEncoder.getPosition();
-    boolean nearTop = (CoralSubsystemConstants.ElevatorSetpoints.kLevel4 - elevatorPosition) < kElevatorSlowZone;
-    boolean nearBottom = elevatorPosition < kElevatorSlowZone;
+//     // Calculate how close we are to limits
+//     double elevatorPosition = elevatorEncoder.getPosition();
+//     boolean nearTop = (CoralSubsystemConstants.ElevatorSetpoints.kLevel4 - elevatorPosition) < kElevatorSlowZone;
+//     boolean nearBottom = elevatorPosition < kElevatorSlowZone;
 
-    // Calculate speed reduction if near limits
-    double speedFactor = (nearTop || nearBottom) ? kElevatorSlowSpeedFactor : 1.0;
+//     // Calculate speed reduction if near limits
+//     double speedFactor = (nearTop || nearBottom) ? kElevatorSlowSpeedFactor : 1.0;
 
-    // Apply dynamic speed reduction by adjusting target dynamically
-    double adjustedElevatorTarget = elevatorPosition + (elevatorCurrentTarget - elevatorPosition) * speedFactor;
+//     // Apply dynamic speed reduction by adjusting target dynamically
+//     double adjustedElevatorTarget = elevatorPosition + (elevatorCurrentTarget - elevatorPosition) * speedFactor;
 
+//     // Moving to a scoring position (elevator up, arm out)
+//     if (armCurrentTarget > CoralSubsystemConstants.ArmSetpoints.kLevel1) {  
+//         // Move arm first with Gravity Feedforward
+//         armController.setReference(armCurrentTarget,ControlType.kMAXMotionPositionControl,ClosedLoopSlot.kSlot0,gravityFFValue);
 
-    // Calculate Gravity Feedforward (GravityFF)
-    double gravityFFValue = CoralSubsystemConstants.kGravityFF * Math.cos(armAngleRadians);
+//         // Wait for arm to reach position before moving elevator up
+//         if (Math.abs(armEncoder.getPosition() - armCurrentTarget) < 0.5) {
+//             elevatorClosedLoopController.setReference(elevatorCurrentTarget,ControlType.kMAXMotionPositionControl);
+//         }
+//       } 
+//     // Returning from a scoring position (elevator down first, then arm)
+//     else {
+//         // Move elevator down first
+//         elevatorClosedLoopController.setReference(adjustedElevatorTarget,ControlType.kMAXMotionPositionControl);
 
-    // Moving to a scoring position (elevator up, arm out)
-    if (armCurrentTarget > CoralSubsystemConstants.ArmSetpoints.kLevel1) {  
-        // Move arm first with Gravity Feedforward
-        armController.setReference(armCurrentTarget,ControlType.kMAXMotionPositionControl,ClosedLoopSlot.kSlot0,gravityFFValue);
-
-        // Wait for arm to reach position before moving elevator up
-        if (Math.abs(armEncoder.getPosition() - armCurrentTarget) < 0.5) {
-            elevatorClosedLoopController.setReference(elevatorCurrentTarget,ControlType.kMAXMotionPositionControl);
-        }
-      } 
-    // Returning from a scoring position (elevator down first, then arm)
-    else {
-        // Move elevator down first
-        elevatorClosedLoopController.setReference(adjustedElevatorTarget,ControlType.kMAXMotionPositionControl);
-
-        // Wait for elevator to lower before moving arm back
-        if (Math.abs(elevatorEncoder.getPosition() - elevatorCurrentTarget) < 2.0) { 
-            armController.setReference(armCurrentTarget,ControlType.kMAXMotionPositionControl,ClosedLoopSlot.kSlot0,gravityFFValue);
-        }
-    }
-}
+//         // Wait for elevator to lower before moving arm back
+//         if (Math.abs(elevatorEncoder.getPosition() - elevatorCurrentTarget) < 2.0) { 
+//             armController.setReference(armCurrentTarget,ControlType.kMAXMotionPositionControl,ClosedLoopSlot.kSlot0,gravityFFValue);
+//         }
+//     }
+// }
 
   /** Zero the elevator encoder when the limit switch is pressed. */
   // private void zeroElevatorOnLimitSwitch() {

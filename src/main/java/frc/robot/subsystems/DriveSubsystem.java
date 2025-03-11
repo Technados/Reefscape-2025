@@ -35,15 +35,6 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class DriveSubsystem extends SubsystemBase {
 
-  private static final double ALIGN_THRESHOLD = 0.2;  // Previously 0.5
-  private static final double RANGE_THRESHOLD = 0.1;  // Previously 1.0
-
-  private double applyMinPower(double power, double minThreshold) {
-    if (Math.abs(power) < minThreshold) {
-        return Math.signum(power) * minThreshold; // Apply a small minimum power
-    }
-    return power;
-}
   private final PIDController limelightTurnPID = new PIDController(
     Constants.LimelightPID.kP_turn, 
     Constants.LimelightPID.kI_turn, 
