@@ -31,7 +31,9 @@ public class CoralSubsystem extends SubsystemBase {
     kLevel4,
     kKnockBack,
     kAlgaeLow,
-    kAlgaeHigh;
+    kAlgaeHigh,
+    kAlgaeScore1,
+    kAlgaeScore2;
   }
 
   // Initialize arm SPARK. We will use MAXMotion position control for the arm, so we also need to
@@ -62,6 +64,11 @@ public class CoralSubsystem extends SubsystemBase {
   private boolean wasResetByLimit = false;
   private double armCurrentTarget = ArmSetpoints.kLevel1;
   private double elevatorCurrentTarget = ElevatorSetpoints.kLevel1;
+  
+  public double getElevatorHeight() {
+    return elevatorEncoder.getPosition(); // returns encoder ticks
+}
+
 
   // Elevator Limit Switch
   //private DigitalInput elevatorLimitSwitch = new DigitalInput(6);
@@ -102,6 +109,8 @@ public class CoralSubsystem extends SubsystemBase {
     // Zero arm and elevator encoders on initialization
     armEncoder.setPosition(0);
     elevatorEncoder.setPosition(0);
+    applyNormalArmConfig(); // Ensure arm starts in normal speed mode
+    
 
   }
 
@@ -263,6 +272,8 @@ private void moveToSetpoint() {
     frontIntakeMotor.set(power);
   }
 
+
+
   /**
    * Command to set the subsystem setpoint. This will set the arm and elevator to their predefined
    * positions for the given setpoint.
@@ -302,6 +313,14 @@ private void moveToSetpoint() {
             case kAlgaeHigh: // NEW CASE ADDED
               armCurrentTarget = ArmSetpoints.kAlgaeHigh;
               elevatorCurrentTarget = ElevatorSetpoints.kLevelA;
+              break;
+            case kAlgaeScore1: // NEW CASE ADDED
+              armCurrentTarget = ArmSetpoints.kAlgaeScore1;
+              elevatorCurrentTarget = ElevatorSetpoints.kLevel4;
+              break;
+            case kAlgaeScore2: // NEW CASE ADDED
+              armCurrentTarget = ArmSetpoints.kAlgaeScore2;
+              elevatorCurrentTarget = ElevatorSetpoints.kLevel4;
               break;
           }
         });
@@ -360,6 +379,29 @@ private void moveToSetpoint() {
     return this.run(() -> {})
       .until(() -> Math.abs(elevatorEncoder.getPosition() - elevatorCurrentTarget) <0.5 );
   } 
+// Add this to CoralSubsystem.java
+public double getArmPosition() {
+  return armEncoder.getPosition(); // Returns current arm encoder position
+}
+
+// Call this to apply normal config
+public void applyNormalArmConfig() {
+  armMotor.configure(
+      Configs.CoralSubsystem.armConfig,
+      ResetMode.kResetSafeParameters,
+      PersistMode.kNoPersistParameters
+  );
+}
+
+// Call this to apply fast config
+public void applyFastArmConfig() {
+  armMotor.configure(
+      Configs.CoralSubsystem.armFastConfig,
+      ResetMode.kResetSafeParameters,
+      PersistMode.kNoPersistParameters
+  );
+}
+
 
   @Override
   public void periodic() {

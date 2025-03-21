@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "BMF"
+                  "pathName": "RB"
                 }
               },
               {
@@ -21,12 +21,6 @@
                 }
               }
             ]
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "FL"
           }
         },
         {
@@ -45,7 +39,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "FLF"
+            "pathName": "BFEED"
           }
         },
         {
@@ -80,7 +74,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "FEEDFR"
+                  "pathName": "FEEDB"
                 }
               },
               {
@@ -104,23 +98,11 @@
               }
             ]
           }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "FRF"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "CoralFeed"
-          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "F",
+  "folder": "Right",
   "choreoAuto": false
 }

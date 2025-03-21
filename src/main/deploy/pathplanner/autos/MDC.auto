@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "RLD"
+                  "pathName": "MD"
                 }
               },
               {
@@ -52,6 +52,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "D",
+  "folder": "Middle",
   "choreoAuto": false
 }

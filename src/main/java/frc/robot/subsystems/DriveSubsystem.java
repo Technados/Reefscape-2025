@@ -33,6 +33,8 @@ import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
+import frc.robot.subsystems.CoralSubsystem;
+
 public class DriveSubsystem extends SubsystemBase {
 
   private final PIDController limelightTurnPID = new PIDController(
@@ -61,7 +63,7 @@ public enum Alignment {
     RIGHT,
     CENTER
 }
-    
+private final CoralSubsystem coralSubsystem;
 
   // Create MAXSwerveModules
   private final MAXSwerveModule m_frontLeft =
@@ -112,11 +114,13 @@ public enum Alignment {
       // PathPlanner RobotConfig
       private RobotConfig config;
 
-      public DriveSubsystem() {
+      public DriveSubsystem(CoralSubsystem coralSubsystem) {
+
+        this.coralSubsystem = coralSubsystem;
                   // set limelight alignment tolerance
-                  limelightTurnPID.setTolerance(2.0);
-                  limelightDistancePID.setTolerance(1);
-                  limelightStrafePID.setTolerance(1);
+                  limelightTurnPID.setTolerance(3);
+                  limelightDistancePID.setTolerance(0.75);
+                  limelightStrafePID.setTolerance(0.5);
 
           // Load RobotConfig
           try {
@@ -200,6 +204,21 @@ public enum Alignment {
 
 public void setSlowMode(boolean enable) {
     slowMode = enable;
+}
+
+// Threshold to auto-enable slow mode when elevator is high
+private static final double kElevatorSlowModeThreshold = 40.0; // <-- Set this to whatever height makes sense (encoder ticks)
+
+/**
+ * Check if we need to enable slow mode based on elevator height or driver input.
+ * @param manualSlowMode true if driver is holding right bumper
+ */
+public void updateDriveSlowMode(boolean manualSlowMode) {
+    // Check if elevator is above threshold
+    boolean elevatorHigh = coralSubsystem.getElevatorHeight() > kElevatorSlowModeThreshold;
+
+    // Enable slow mode if either driver asks for it or elevator is high
+    setSlowMode(manualSlowMode || elevatorHigh);
 }
 
   /**
@@ -291,91 +310,167 @@ public ChassisSpeeds getChassisSpeeds() {
 /**
  * Align to the reef for scoring or algae removal.
  */
-private double lastValidTargetTime = 0; // Track when Limelight last updated
 
+/**
+ * Align to the reef (or center algae) using AprilTag + Limelight data.
+ */
 public void alignToReef(Alignment alignment) {
-    int pipeline = (alignment == Alignment.LEFT) ? 0 : 1;
-    limelight.getEntry("pipeline").setNumber(pipeline);
+  // 🔹 Set pipeline based on alignment
+  int pipeline = switch (alignment) {
+      case LEFT -> 0;
+      case RIGHT -> 1;
+      case CENTER -> 2;
+  };
+  limelight.getEntry("pipeline").setNumber(pipeline);
 
-    double tx = limelight.getEntry("tx").getDouble(0.0);
-    double ty = limelight.getEntry("ty").getDouble(0.0);
-    int tagID = (int) limelight.getEntry("tid").getDouble(-1);
+  double tx = limelight.getEntry("tx").getDouble(0.0);
+  double ty = limelight.getEntry("ty").getDouble(0.0);
+  int tagID = (int) limelight.getEntry("tid").getDouble(-1);
 
-    // Ensure valid tag is detected
-    if (tagID == -1) {
-        stopMovement();
-        setSlowMode(false);
-        SmartDashboard.putString("ReefAlign Status", "No AprilTag Detected");
-        return;
-    }
+  // 🔹 Validate tag detection
+  if (tagID == -1) {
+      stopMovement();
+      setSlowMode(false);
+      SmartDashboard.putString("ReefAlign Status", "No AprilTag Detected");
+      return;
+  }
 
-    // Ensure data is fresh (no stale readings)
-    lastValidTargetTime = Timer.getFPGATimestamp();
-    double currentTime = Timer.getFPGATimestamp();
-    if (currentTime - lastValidTargetTime > 0.5) { // If Limelight data is stale
-        stopMovement();
-        setSlowMode(false);
-        SmartDashboard.putString("ReefAlign Status", "Stale Data - Not Aligning");
-        return;
-    }
+  double targetHeading = getReefHeading(tagID);
+  if (Double.isNaN(targetHeading)) {
+      stopMovement();
+      setSlowMode(false);
+      SmartDashboard.putString("ReefAlign Status", "Invalid Target Heading");
+      return;
+  }
 
-    double targetHeading = getReefHeading(tagID);
-    if (Double.isNaN(targetHeading)) {
-        stopMovement();
-        setSlowMode(false);
-        SmartDashboard.putString("ReefAlign Status", "Invalid Target Heading");
-        return;
-    }
+  // 🔹 Enable slow mode
+  setSlowMode(true);
 
-    // ✅ Enable Slow Drive Mode
-    setSlowMode(true);
+  // 🔹 Step 1: Rotate first
+  double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
+  boolean turnComplete = limelightTurnPID.atSetpoint();
 
-    // 🔹 Step 1: Align Heading First
-    double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
-    boolean turnComplete = limelightTurnPID.atSetpoint();
+  if (!turnComplete) {
+      drive(0, 0, turnPower, false);
+      SmartDashboard.putString("ReefAlign Status", "Turning to Target");
+      return;
+  }
 
-    if (!turnComplete) {
-        drive(0, 0, turnPower, false);
-        SmartDashboard.putString("ReefAlign Status", "Turning to Target");
-        return;
-    } else {
-        drive(0, 0, 0, false); // Stop turning
-    }
+  // 🔹 Step 2: Simultaneous tx + ty movement
+  double forwardPower = limelightDistancePID.calculate(ty, Constants.DesiredDistances.REEF_SCORING);
+  double strafePower = -limelightStrafePID.calculate(tx, 0.0);
 
-    // 🔹 Step 2: Strafe Until Crosshair is Centered
-    double strafePower = -limelightStrafePID.calculate(tx, 0.0);
-    boolean strafeComplete = limelightStrafePID.atSetpoint();
+  // Apply deadbands to eliminate twitching
+  if (Math.abs(forwardPower) < 0.02) forwardPower = 0;
+  if (Math.abs(strafePower) < 0.02) strafePower = 0;
 
-    // // ✅ Apply Deadband to prevent unnecessary micro-movements
-    if (Math.abs(strafePower) < 0.005) {
-        strafePower = 0;
-    }
+  boolean driveComplete = limelightDistancePID.atSetpoint();
+  boolean strafeComplete = limelightStrafePID.atSetpoint();
 
-    if (!strafeComplete) {
-        drive(0, strafePower, 0, false);
-        SmartDashboard.putString("ReefAlign Status", "Strafing");
-        return;
-    }
+  if (!driveComplete || !strafeComplete) {
+      drive(forwardPower, strafePower, 0, false);
+      SmartDashboard.putString("ReefAlign Status", "Driving to Target");
+      SmartDashboard.putNumber("tx", tx);
+      SmartDashboard.putNumber("ty", ty);
+      SmartDashboard.putBoolean("TX Done", strafeComplete);
+      SmartDashboard.putBoolean("TY Done", driveComplete);
+      return;
+  }
 
-    // 🔹 Step 3: Move Forward to Reach the Reef
-    double drivePower = limelightDistancePID.calculate(ty, 0);
-    boolean driveComplete = limelightDistancePID.atSetpoint();
-    
-    if (!driveComplete) {
-        drive(drivePower, 0, 0, false);
-        SmartDashboard.putString("ReefAlign Status", "Driving Forward");
-        return;
-     }
-
-    // 🔹 Final Stop Condition - All Steps Complete
-    if (turnComplete && driveComplete && strafeComplete) {
-        stopMovement();
-        setSlowMode(false);
-        drive(0, 0, 0, true); // ✅ Ensures next movement is field-relative
-        SmartDashboard.putString("ReefAlign Status", "Alignment Complete");
-    }
+  // 🔹 Final Step: Stop + restore normal mode
+  stopMovement();
+  setSlowMode(false);
+  drive(0, 0, 0, true); // Return to field-relative driving
+  SmartDashboard.putString("ReefAlign Status", "Alignment Complete");
 }
-  
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// old reef align command - keeping temp until new one tested
+/// 
+// private double lastValidTargetTime = 0; // Track when Limelight last updated
+
+// public void alignToReef(Alignment alignment) {
+//     int pipeline = (alignment == Alignment.LEFT) ? 0 : 1;
+//     limelight.getEntry("pipeline").setNumber(pipeline);
+
+//     double tx = limelight.getEntry("tx").getDouble(0.0);
+//     double ty = limelight.getEntry("ty").getDouble(0.0);
+//     int tagID = (int) limelight.getEntry("tid").getDouble(-1);
+
+//     // Ensure valid tag is detected
+//     if (tagID == -1) {
+//         stopMovement();
+//         setSlowMode(false);
+//         SmartDashboard.putString("ReefAlign Status", "No AprilTag Detected");
+//         return;
+//     }
+
+//     // Ensure data is fresh (no stale readings)
+//     // lastValidTargetTime = Timer.getFPGATimestamp();
+//     // double currentTime = Timer.getFPGATimestamp();
+//     // if (currentTime - lastValidTargetTime > 0.5) { // If Limelight data is stale
+//     //     stopMovement();
+//     //     setSlowMode(false);
+//     //     SmartDashboard.putString("ReefAlign Status", "Stale Data - Not Aligning");
+//     //     return;
+//     // }
+
+//     double targetHeading = getReefHeading(tagID);
+//     if (Double.isNaN(targetHeading)) {
+//         stopMovement();
+//         setSlowMode(false);
+//         SmartDashboard.putString("ReefAlign Status", "Invalid Target Heading");
+//         return;
+//     }
+
+//     // ✅ Enable Slow Drive Mode
+//     setSlowMode(true);
+
+//     // 🔹 Step 1: Align Heading First
+//     double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
+//     boolean turnComplete = limelightTurnPID.atSetpoint();
+
+//     if (!turnComplete) {
+//         drive(0, 0, turnPower, false);
+//         SmartDashboard.putString("ReefAlign Status", "Turning to Target");
+//         return;
+//     } else {
+//         drive(0, 0, 0, false); // Stop turning
+//     }
+
+//     // 🔹 Step 3: Move Forward to Reach the Reef
+//     double drivePower = limelightDistancePID.calculate(ty, 0);
+//     boolean driveComplete = limelightDistancePID.atSetpoint();
+    
+//     if (!driveComplete) {
+//         drive(drivePower, 0, 0, false);
+//         SmartDashboard.putString("ReefAlign Status", "Driving Forward");
+//         return;
+//      }
+
+//      // 🔹 Step 2: Strafe Until Crosshair is Centered
+//     double strafePower = -limelightStrafePID.calculate(tx, 0.0);
+//     boolean strafeComplete = limelightStrafePID.atSetpoint();
+
+//     // // ✅ Apply Deadband to prevent unnecessary micro-movements
+//     if (Math.abs(strafePower) < 0.00) {
+//         strafePower = 0;
+//     }
+
+//     if (!strafeComplete) {
+//         drive(0, strafePower, 0, false);
+//         SmartDashboard.putString("ReefAlign Status", "Strafing");
+//         return;
+//     }
+
+//     // 🔹 Final Stop Condition - All Steps Complete
+//     if (turnComplete && driveComplete && strafeComplete) {
+//         stopMovement();
+//         setSlowMode(false);
+//         drive(0, 0, 0, true); // ✅ Ensures next movement is field-relative
+//         SmartDashboard.putString("ReefAlign Status", "Alignment Complete");
+//     }
+// }
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
   private double getReefHeading(int tagID) {
     switch (tagID) {

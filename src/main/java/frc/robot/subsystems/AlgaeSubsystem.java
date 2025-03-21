@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Configs;
 import frc.robot.Constants.AlgaeSubsystemConstants;
-import frc.robot.Constants.CoralSubsystemConstants.IntakeSetpoints;
+
 
 
 public class AlgaeSubsystem extends SubsystemBase {
@@ -56,17 +56,18 @@ public class AlgaeSubsystem extends SubsystemBase {
      * Command to run the algae intake forward.
      */
     public Command runIntakeCommand() {
-      return this.startEnd(
-          () -> {
-              hasGamePiece = false; // Reset when running intake
-              setIntakePower(AlgaeSubsystemConstants.IntakeSetpoints.kForward);
-          },
-          () -> {
-              hasGamePiece = true; // Assume a piece is held after stopping
-              setIntakePower(0.0);
-          }
-      );
-  }
+        return this.startEnd(
+            () -> {
+                hasGamePiece = false; // ✅ Clear flag when starting intake
+                setIntakePower(AlgaeSubsystemConstants.IntakeSetpoints.kForward);
+            },
+            () -> {
+                // ✅ Don’t manually set hasGamePiece = true
+                setIntakePower(0.0); // Let periodic() apply hold power if needed
+            }
+        );
+      }
+      
 
   /**
    * Command to reverse the algae intake.
@@ -87,7 +88,7 @@ public class AlgaeSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
       double current = intakeMotor.getOutputCurrent();
-      hasGamePiece = (current > 10.0); // Adjust threshold as needed
+      hasGamePiece = (current > 30); // Adjust threshold as needed
       SmartDashboard.putNumber("Algae/Intake Current", current);
   }
 }

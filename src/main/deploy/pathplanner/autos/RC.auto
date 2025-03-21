@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "BRF"
+                  "pathName": "RC"
                 }
               },
               {
@@ -21,12 +21,6 @@
                 }
               }
             ]
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "FL"
           }
         },
         {
@@ -45,7 +39,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "FLF"
+            "pathName": "CRF"
           }
         },
         {
@@ -55,22 +49,9 @@
           }
         },
         {
-          "type": "wait",
+          "type": "named",
           "data": {
-            "waitTime": 3.0
-          }
-        },
-        {
-          "type": "sequential",
-          "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "Intake"
-                }
-              }
-            ]
+            "name": "Intake"
           }
         },
         {
@@ -80,7 +61,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "FEEDFR"
+                  "pathName": "FEEDC"
                 }
               },
               {
@@ -104,30 +85,11 @@
               }
             ]
           }
-        },
-        {
-          "type": "parallel",
-          "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "FR"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "CoralFeed"
-                }
-              }
-            ]
-          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "F",
+  "folder": "Right",
   "choreoAuto": false
 }

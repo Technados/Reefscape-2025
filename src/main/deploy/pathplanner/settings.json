@@ -3,24 +3,19 @@
   "robotLength": 0.85852,
   "holonomicMode": true,
   "pathFolders": [
-    "Feeders",
-    "Test Paths",
-    "RR",
-    "RM",
-    "RL",
+    "R",
+    "Algae",
+    "M",
+    "L",
     "In Between ",
-    "Backs",
-    "BR",
-    "BM",
-    "BL"
+    "Feeders",
+    "Backs"
   ],
   "autoFolders": [
     "Test Autos",
-    "F",
-    "E",
-    "D",
-    "C",
-    "B"
+    "Right",
+    "Middle",
+    "Left"
   ],
   "defaultMaxVel": 4.0,
   "defaultMaxAccel": 3.0,

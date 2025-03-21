@@ -58,13 +58,14 @@ public final class Configs {
 
   public static final class CoralSubsystem {
     public static final SparkMaxConfig armConfig = new SparkMaxConfig();
+    public static final SparkMaxConfig armFastConfig = new SparkMaxConfig();
     public static final SparkMaxConfig elevatorConfig = new SparkMaxConfig();
     public static final SparkFlexConfig intakeConfig = new SparkFlexConfig();
     public static final SparkMaxConfig frontIntakeConfig = new SparkMaxConfig();
     static {
       // Configure basic settings of the arm motor
       armConfig.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(40).voltageCompensation(12);
-
+      armFastConfig.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(40).voltageCompensation(12);
       /*
        * Configure the closed loop controller. We want to make sure we set the
        * feedback sensor as the primary encoder.
@@ -78,9 +79,21 @@ public final class Configs {
           .outputRange(-1, 1)
           .maxMotion
           // Set MAXMotion parameters for position control
-          .maxVelocity(2000)
-          .maxAcceleration(2500)
+          .maxVelocity(5000)
+          .maxAcceleration(6000)
           .allowedClosedLoopError(0.250);
+
+      armFastConfig
+          .closedLoop
+          .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+          .p(0.35) // same P gain
+          .d(0.001) // same D gain
+          .outputRange(-1, 1)
+          .maxMotion
+          .maxVelocity(10000) // 🔥 FASTER for tossing
+          .maxAcceleration(10000) // 🔥 FASTER for tossing
+          .allowedClosedLoopError(0.250);
+
         
 
       // Configure basic settings of the elevator motor
@@ -109,8 +122,8 @@ public final class Configs {
           .outputRange(-1, 1)
           .maxMotion
           // Set MAXMotion parameters for position control
-          .maxVelocity(36000)
-          .maxAcceleration(38000)
+          .maxVelocity(58000)
+          .maxAcceleration(60000)
           .allowedClosedLoopError(0.5);
 
             /*
@@ -160,8 +173,8 @@ public final class Configs {
           .outputRange(-1, 1)
           .maxMotion
           // Set MAXMotion parameters for position control
-          .maxVelocity(4000)
-          .maxAcceleration(6000)
+          .maxVelocity(12000)
+          .maxAcceleration(12000)
           .allowedClosedLoopError(0.15);
     }
 }

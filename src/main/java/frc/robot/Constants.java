@@ -43,15 +43,18 @@ public final class Constants {
       public static final double kLevel3 = 17.75;
       public static final double kLevel4 = 19;
       public static final double kKnockBack = 20.5;
-      public static final double kAlgaeLow = 5.5;
-      public static final double kAlgaeHigh = 5.5;
+      public static final double kAlgaeLow = 6;
+      public static final double kAlgaeHigh = 6;
+      public static final double kAlgaeScore1 = 24;
+      public static final double kAlgaeScore2 = 10;
     }
 
     public static final double kArmDegreesPerEncoderTick = 8.26; // based on 20:1 planetary AND a 22t --> 48t chain reduction
 
     public static final class IntakeSetpoints {
       public static final double kForward = -0.5;
-      public static final double kReverse = 0.5;
+      public static final double kReverse = 0.90;
+      public static final double kHold = 0.15; // adjust as needed
     }
 
     public static final class FrontIntakeSetpoints {
@@ -60,12 +63,12 @@ public final class Constants {
     }
 
     // Gravity Feedforward
-    public static final double kArmGravityFF = 0.65; // Arm feedforward (adjust as tuned)
-    public static final double kElevatorGravityFF = 0.15; // Elevator feedforward (adjust as tuned)
+    public static final double kArmGravityFF = 0.7; // Arm feedforward (adjust as tuned)
+    public static final double kElevatorGravityFF = 0.20; // Elevator feedforward (adjust as tuned)
 
     // Slow zone behavior
-    public static final double kElevatorSlowZone = 10.0; // Number of ticks from limit to start slowing
-    public static final double kElevatorSlowSpeedFactor = 0.4; // 40% of speed when inside slow zone
+    public static final double kElevatorSlowZone = 5.0; // Number of ticks from limit to start slowing
+    public static final double kElevatorSlowSpeedFactor = 0.5; // 40% of speed when inside slow zone
 
 
   }
@@ -74,9 +77,9 @@ public final class Constants {
     public static final int kIntakeMotorCanId = 12;
 
     public static final class IntakeSetpoints{
-      public static final double kForward = 0.75;
-      public static final double kReverse = -0.75;
-      public static final double kHold = 0.35;
+      public static final double kForward = -0.50;
+      public static final double kReverse = 0.50;
+      public static final double kHold = -0.20;
     }
   }
   public static final class ClimberSubsystemConstants {
@@ -138,9 +141,9 @@ public static final class LimelightPID {
   public static final double kI_distance = 0.0;
   public static final double kD_distance = 0.01; // New (small D gain)
 
-  public static final double kP_strafe = 0.2;  // Previously 0.15
+  public static final double kP_strafe = 0.15;  // Previously 0.15
   public static final double kI_strafe = 0.0;
-  public static final double kD_strafe = 0.01; // New (small D gain)
+  public static final double kD_strafe = 0.015; // New (small D gain)
 
 }
 
@@ -148,9 +151,9 @@ public static final class LimelightPID {
   public static final class DriveConstants {
     // Driving Parameters - Note that these are not the maximum capable speeds of
     // the robot, rather the allowed maximum speeds
-    public static final double kMaxSpeedMetersPerSecond = 2.5;
+    public static final double kMaxSpeedMetersPerSecond = 4.0;
     public static final double kMaxAngularSpeed = 2 * Math.PI; // radians per second
-    public static final double kSlowSpeedFactor = 0.30; // Slow mode speed factor (40% of normal speed)
+    public static final double kSlowSpeedFactor = 0.20; // Slow mode speed factor (40% of normal speed)
 
     // Chassis configuration
     public static final double kTrackWidth = Units.inchesToMeters(23.5);
