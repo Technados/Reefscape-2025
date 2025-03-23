@@ -26,8 +26,11 @@ public class AlgaeSubsystem extends SubsystemBase {
 
   // Member variables for subsystem state management
   // private boolean stowWhenIdle = true;
+  private final LEDSubsystem ledSubsystem;
 
-  public AlgaeSubsystem() {
+  public AlgaeSubsystem(LEDSubsystem ledSubsystem) {
+      this.ledSubsystem = ledSubsystem;
+  
     /*
      * Apply the configuration to the SPARKs.
      *
@@ -73,22 +76,29 @@ public class AlgaeSubsystem extends SubsystemBase {
    * Command to reverse the algae intake.
    */
   public Command reverseIntakeCommand() {
-      return this.startEnd(
-          () -> {
-              hasGamePiece = false; // Releasing the game piece
-              setIntakePower(AlgaeSubsystemConstants.IntakeSetpoints.kReverse);
-          },
-          () -> {
-              hasGamePiece = false; // Ensure holding power does not apply after ejecting
-              setIntakePower(0.0);
-          }
-      );
-  }
+    return this.startEnd(
+        () -> {
+            hasGamePiece = false;
+            setIntakePower(AlgaeSubsystemConstants.IntakeSetpoints.kReverse);
+        },
+        () -> {
+            hasGamePiece = false;
+            setIntakePower(0.0);
+            ledSubsystem.resetToDefault(); // 🔹 Revert LED after ejecting
+        }
+    );
+}
+
   
   @Override
   public void periodic() {
       double current = intakeMotor.getOutputCurrent();
       hasGamePiece = (current > 30); // Adjust threshold as needed
       SmartDashboard.putNumber("Algae/Intake Current", current);
+
+      if (hasGamePiece) {
+        ledSubsystem.setPattern(0.77); // Teal for algae
+    }
+    
   }
 }

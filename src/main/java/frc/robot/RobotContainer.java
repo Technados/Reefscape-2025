@@ -23,16 +23,12 @@ import frc.robot.subsystems.CoralSubsystem;
 import frc.robot.subsystems.CoralSubsystem.Setpoint;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.DriveSubsystem.Alignment;
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
-
-
+import frc.robot.subsystems.LEDSubsystem;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-//import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -43,22 +39,20 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 public class RobotContainer {
   // The robot's subsystems
 
-    // First create CoralSubsystem
-    private final CoralSubsystem m_coralSubSystem = new CoralSubsystem();
-    // Pass CoralSubsystem into DriveSubsystem
-    private final DriveSubsystem m_robotDrive = new DriveSubsystem(m_coralSubSystem);
-    private final AlgaeSubsystem m_algaeSubsystem = new AlgaeSubsystem();
-  //private final ClimberSubsystem m_ClimberSubsystem = new ClimberSubsystem();
-  // private final ClimberSubsystem m_climberSubsystem = new ClimberSubsystem();
+    // First create subsytems in container
+    private final LEDSubsystem m_ledSubsystem = new LEDSubsystem(0); // PWM port 0
+    
+    private final CoralSubsystem m_coralSubSystem = new CoralSubsystem(m_ledSubsystem);
+    private final AlgaeSubsystem m_algaeSubsystem = new AlgaeSubsystem(m_ledSubsystem);
+    private final DriveSubsystem m_robotDrive = new DriveSubsystem(m_coralSubSystem, m_ledSubsystem);
+    
+    
 
-  //private final DriveSubsystem driveSubsystem = new DriveSubsystem();
 
-  //Create Commands
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // create autoChooser
-  //private final SendableChooser<String> BlueautoChooser = new SendableChooser<>();
-  //private final SendableChooser<String> RedautoChooser = new SendableChooser<>();
   private final SendableChooser<String> autoChooser = new SendableChooser<>();
 
   // Commands for PathPlanner
@@ -132,47 +126,34 @@ public class RobotContainer {
 
     NamedCommands.registerCommand("ScoreAlgae", 
     new SequentialCommandGroup(
- 
-    
         new InstantCommand(() -> m_coralSubSystem.applyFastArmConfig()),
-
         m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeScore2),
-
-        new WaitUntilCommand(() -> Math.abs(m_coralSubSystem.getArmPosition() - 23) < 0.5),
-
+        new WaitUntilCommand(() -> Math.abs(m_coralSubSystem.getArmPosition() - 23) < 0.25),
         m_algaeSubsystem.reverseIntakeCommand().withTimeout(0.3),
-
         m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1),
-
         new InstantCommand(() -> m_coralSubSystem.applyNormalArmConfig())
     ));
 
     NamedCommands.registerCommand("AlgaeLow", 
     new SequentialCommandGroup(
         m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeLow),
-
         m_coralSubSystem.waitUntilIntakeSafe(Constants.CoralSubsystemConstants.ArmSetpoints.kAlgaeLow),
-
         m_algaeSubsystem.runIntakeCommand().withTimeout(1.5),
-
         m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1)
     ));
 
     NamedCommands.registerCommand("AlgaeHigh", 
     new SequentialCommandGroup(
         m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeHigh),
-
         m_coralSubSystem.waitUntilIntakeSafe(Constants.CoralSubsystemConstants.ArmSetpoints.kAlgaeHigh),
-
         m_algaeSubsystem.runIntakeCommand().withTimeout(1.5),
-
         m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1)
 ));
 
 
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // The driver's controller
   CommandXboxController m_driverController =
@@ -230,6 +211,7 @@ m_robotDrive.setDefaultCommand(
    * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then calling passing it to a
    * {@link JoystickButton}.
    */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   private void configureButtonBindings() {
 
     // Driver Controller
@@ -254,8 +236,8 @@ m_robotDrive.setDefaultCommand(
             // STEP 1: Move arm to AlgaeScore2 (arm 12, elevator holds)
             m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeScore2),
     
-            // STEP 2: Wait until arm near 19, then toss algae
-            new WaitUntilCommand(() -> Math.abs(m_coralSubSystem.getArmPosition() - 23.5) < 0.5),
+            // STEP 2: Wait until arm near -23.5, then toss algae
+            new WaitUntilCommand(() -> Math.abs(m_coralSubSystem.getArmPosition() - 23.5) < 0.25),
             m_algaeSubsystem.reverseIntakeCommand().withTimeout(0.3), // Toss algae
     
             // STEP 3: Return to Level 1

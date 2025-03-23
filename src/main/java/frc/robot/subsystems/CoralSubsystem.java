@@ -19,7 +19,8 @@ import frc.robot.Constants.CoralSubsystemConstants.ArmSetpoints;
 import frc.robot.Constants.CoralSubsystemConstants.ElevatorSetpoints;
 import frc.robot.Constants.CoralSubsystemConstants.FrontIntakeSetpoints;
 import frc.robot.Constants.CoralSubsystemConstants.IntakeSetpoints;
-import edu.wpi.first.wpilibj.DigitalInput;
+//import edu.wpi.first.wpilibj.DigitalInput;
+//import frc.robot.subsystems.LEDSubsystem;
 
 public class CoralSubsystem extends SubsystemBase {
   /** Subsystem-wide setpoints */
@@ -35,6 +36,7 @@ public class CoralSubsystem extends SubsystemBase {
     kAlgaeScore1,
     kAlgaeScore2;
   }
+
 
   // Initialize arm SPARK. We will use MAXMotion position control for the arm, so we also need to
   // initialize the closed loop controller and encoder.
@@ -61,7 +63,7 @@ public class CoralSubsystem extends SubsystemBase {
 
   // Member variables for subsystem state management
   private boolean wasResetByButton = false;
-  private boolean wasResetByLimit = false;
+  //private boolean wasResetByLimit = false;
   private double armCurrentTarget = ArmSetpoints.kLevel1;
   private double elevatorCurrentTarget = ElevatorSetpoints.kLevel1;
   
@@ -74,10 +76,13 @@ public class CoralSubsystem extends SubsystemBase {
   //private DigitalInput elevatorLimitSwitch = new DigitalInput(6);
 
   // safe elevator slow down zone near limits for dynamic speed reduction approaching limits
-  private static final double kElevatorSlowZone = 10.0; //encoder ticks before top/bottom to start slow zone 
-  private static final double kElevatorSlowSpeedFactor = 0.4; // 40% of full speed when near limit
+  // private static final double kElevatorSlowZone = 10.0; //encoder ticks before top/bottom to start slow zone 
+  // private static final double kElevatorSlowSpeedFactor = 0.4; // 40% of full speed when near limit
+  private final LEDSubsystem ledSubsystem;
 
-  public CoralSubsystem() {
+  public CoralSubsystem(LEDSubsystem ledSubsystem) {
+      this.ledSubsystem = ledSubsystem;
+  
     /*
      * Apply the appropriate configurations to the SPARKs.
      *
@@ -128,7 +133,10 @@ private void moveToSetpoint() {
   double armAngleRadians = Math.toRadians(armAngleDegrees - 90); // Offset so arm hanging down is cos(90)=0
 
   // Gravity Feedforward for Arm
-  double gravityFFValue = CoralSubsystemConstants.kArmGravityFF * Math.cos(armAngleRadians);
+  double rawFF = CoralSubsystemConstants.kArmGravityFF * Math.cos(armAngleRadians);
+  double gravityFFValue = Math.copySign(Math.max(Math.abs(rawFF), 0.05), rawFF); // Clamp to ±0.05 minimum
+  
+
 
   // ========================
   // Elevator Slow Zone & FF
@@ -262,11 +270,20 @@ private void moveToSetpoint() {
       wasResetByButton = false;
     }
   }
+  
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+  /// 
+  private boolean hasGamePiece = false;
 
   /** Set the intake motor power in the range of [-1, 1]. */
   private void setIntakePower(double power) {
-    intakeMotor.set(power);
-  }
+    if (hasGamePiece && power == 0.0) {
+        intakeMotor.set(CoralSubsystemConstants.IntakeSetpoints.kHold); // Hold only if game piece detected
+    } else {
+        intakeMotor.set(power);
+    }
+}
+
 
   private void setFrontIntakePower(double power) {
     frontIntakeMotor.set(power);
@@ -332,9 +349,16 @@ private void moveToSetpoint() {
    */
   public Command reverseIntakeCommand() {
     return this.startEnd(
-        () -> this.setIntakePower(IntakeSetpoints.kReverse), () -> this.setIntakePower(0.0))
-        .withTimeout(0.50);
-  }
+        () -> {
+            this.setIntakePower(IntakeSetpoints.kReverse);
+        },
+        () -> {
+            this.setIntakePower(0.0);
+            ledSubsystem.resetToDefault(); // 🔹 Revert LED after ejecting
+        }
+    ).withTimeout(0.50);
+}
+
 
   public Command reverseFrontIntakeCommand() {
     return this.startEnd(
@@ -349,15 +373,17 @@ private void moveToSetpoint() {
   public Command runIntakeCommand() {
     return this.startEnd(
         () -> {
-            this.setIntakePower(IntakeSetpoints.kForward);
-            this.setFrontIntakePower(FrontIntakeSetpoints.kForward);
-        }, 
+            hasGamePiece = false; // Reset detection at intake start
+            setIntakePower(CoralSubsystemConstants.IntakeSetpoints.kForward); // May hold later
+            setFrontIntakePower(FrontIntakeSetpoints.kForward); // Just runs
+        },
         () -> {
-            this.setIntakePower(0.0);
-            this.setFrontIntakePower(0.0);
+            setIntakePower(0.0); // May apply hold
+            setFrontIntakePower(0.0); // Always clean stop
         }
     );
 }
+
 
 
   public Command runFrontIntakeCommand() {
@@ -409,6 +435,14 @@ public void applyFastArmConfig() {
     //zeroElevatorOnLimitSwitch(); 
     zeroOnUserButton();
 
+    double current = intakeMotor.getOutputCurrent();
+    hasGamePiece = current > 20.0; // Game piece detected?
+    SmartDashboard.putNumber("Coral/Intake Current", current);
+
+    if (hasGamePiece) {
+      ledSubsystem.setPattern(0.93); // White
+  }
+  
   
     // Display subsystem values
     SmartDashboard.putNumber("Arm Target Position", armCurrentTarget);

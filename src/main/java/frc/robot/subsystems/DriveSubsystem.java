@@ -14,7 +14,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.SerialPort;
-import edu.wpi.first.wpilibj.Timer;
+
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -28,12 +28,12 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import frc.robot.Constants;
 import frc.robot.Constants.AprilTagIDs;
-import frc.robot.Constants.CoralSubsystemConstants.IntakeSetpoints;
+
 import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
-import frc.robot.subsystems.CoralSubsystem;
+
 
 public class DriveSubsystem extends SubsystemBase {
 
@@ -114,8 +114,14 @@ private final CoralSubsystem coralSubsystem;
       // PathPlanner RobotConfig
       private RobotConfig config;
 
-      public DriveSubsystem(CoralSubsystem coralSubsystem) {
+      private final LEDSubsystem ledSubsystem;
+      private boolean hasFlashedEndgame = false;
 
+
+      public DriveSubsystem(CoralSubsystem coralSubsystem, LEDSubsystem ledSubsystem) {
+  
+        this.ledSubsystem = ledSubsystem;
+      
         this.coralSubsystem = coralSubsystem;
                   // set limelight alignment tolerance
                   limelightTurnPID.setTolerance(3);
@@ -160,6 +166,10 @@ private final CoralSubsystem coralSubsystem;
   public void periodic() {
 
     SmartDashboard.putNumber("Gyro", getHeading()); // returns the heading of the robot and sends to dashboard
+    if (!m_gyro.isConnected()) {
+      ledSubsystem.setPattern(0.61); // 🔴 Red if gyro offline
+  }
+  
 
 
     
@@ -172,6 +182,15 @@ private final CoralSubsystem coralSubsystem;
           m_rearLeft.getPosition(),
           m_rearRight.getPosition()
         });
+
+        if (edu.wpi.first.wpilibj.DriverStation.isTeleopEnabled() &&
+    edu.wpi.first.wpilibj.DriverStation.getMatchTime() <= 30.0 &&
+    !hasFlashedEndgame) {
+
+    ledSubsystem.flashPattern(0.87, 2.0); // 🔵 Blue flash for 2 seconds
+    hasFlashedEndgame = true;
+}
+
   }
 
   /**
@@ -381,6 +400,8 @@ public void alignToReef(Alignment alignment) {
   stopMovement();
   setSlowMode(false);
   drive(0, 0, 0, true); // Return to field-relative driving
+  ledSubsystem.flashPattern(0.91, 1.5); // Flash purple
+
   SmartDashboard.putString("ReefAlign Status", "Alignment Complete");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////

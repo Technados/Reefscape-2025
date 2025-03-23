@@ -64,6 +64,7 @@ public final class Constants {
 
     // Gravity Feedforward
     public static final double kArmGravityFF = 0.7; // Arm feedforward (adjust as tuned)
+    public static final double kArmGravityFFMin = 0.05;
     public static final double kElevatorGravityFF = 0.20; // Elevator feedforward (adjust as tuned)
 
     // Slow zone behavior
