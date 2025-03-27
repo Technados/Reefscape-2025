@@ -38,15 +38,15 @@ public final class Constants {
 
     public static final class ArmSetpoints {
       public static final double kFeederStation = -1.25;
-      public static final double kLevel1 = 1.25;
+      public static final double kLevel1 = 0;
       public static final double kLevel2 = 16;
       public static final double kLevel3 = 17.75;
       public static final double kLevel4 = 19;
       public static final double kKnockBack = 20.5;
-      public static final double kAlgaeLow = 6;
-      public static final double kAlgaeHigh = 6;
-      public static final double kAlgaeScore1 = 24;
-      public static final double kAlgaeScore2 = 10;
+      public static final double kAlgaeLow = 6.5;
+      public static final double kAlgaeHigh = 6.5;
+      public static final double kAlgaeScore1 = 25;
+      public static final double kAlgaeScore2 = 14;
     }
 
     public static final double kArmDegreesPerEncoderTick = 8.26; // based on 20:1 planetary AND a 22t --> 48t chain reduction
@@ -54,7 +54,7 @@ public final class Constants {
     public static final class IntakeSetpoints {
       public static final double kForward = -0.5;
       public static final double kReverse = 0.90;
-      public static final double kHold = 0.15; // adjust as needed
+      public static final double kHold = -0.02; // adjust as needed
     }
 
     public static final class FrontIntakeSetpoints {
@@ -64,7 +64,7 @@ public final class Constants {
 
     // Gravity Feedforward
     public static final double kArmGravityFF = 0.7; // Arm feedforward (adjust as tuned)
-    public static final double kArmGravityFFMin = 0.05;
+    public static final double kArmGravityFFMin = 0.1;
     public static final double kElevatorGravityFF = 0.20; // Elevator feedforward (adjust as tuned)
 
     // Slow zone behavior
@@ -78,8 +78,8 @@ public final class Constants {
     public static final int kIntakeMotorCanId = 12;
 
     public static final class IntakeSetpoints{
-      public static final double kForward = -0.50;
-      public static final double kReverse = 0.50;
+      public static final double kForward = -0.60;
+      public static final double kReverse = 0.85;
       public static final double kHold = -0.20;
     }
   }
@@ -136,15 +136,15 @@ public static final class LimelightPID {
 
   public static final double kP_turn = 0.15;   // Previously 0.1
   public static final double kI_turn = 0.000;
-  public static final double kD_turn = 0.01;   // New (small D gain)
+  public static final double kD_turn = 0.0;   // New (small D gain)
 
   public static final double kP_distance = 0.2; // Previously 0.15
   public static final double kI_distance = 0.0;
-  public static final double kD_distance = 0.01; // New (small D gain)
+  public static final double kD_distance = 0.0; // New (small D gain)
 
   public static final double kP_strafe = 0.15;  // Previously 0.15
   public static final double kI_strafe = 0.0;
-  public static final double kD_strafe = 0.015; // New (small D gain)
+  public static final double kD_strafe = 0.0005; // New (small D gain)
 
 }
 

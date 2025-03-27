@@ -6,9 +6,14 @@ import edu.wpi.first.wpilibj.Timer;
 
 public class LEDSubsystem extends SubsystemBase {
     private final Spark blinkin;
-    private double defaultPattern = -0.51; // Rainbow palette (or choose your favorite)
+    private double defaultPattern = -0.41; // any visual default
+
     private boolean overriding = false;
     private double overrideEndTime = 0;
+
+    private boolean hasFlashedCoral = false;
+    private boolean hasFlashedAlgae = false;
+    private boolean hasFlashedGyroAlert = false;
 
     public LEDSubsystem(int pwmPort) {
         blinkin = new Spark(pwmPort);
@@ -20,11 +25,6 @@ public class LEDSubsystem extends SubsystemBase {
         if (!overriding) {
             blinkin.set(pattern);
         }
-    }
-
-    public void setPattern(double pattern) {
-        blinkin.set(pattern);
-        overriding = false;
     }
 
     public void flashPattern(double pattern, double duration) {
@@ -43,5 +43,39 @@ public class LEDSubsystem extends SubsystemBase {
         if (overriding && Timer.getFPGATimestamp() >= overrideEndTime) {
             resetToDefault();
         }
+    }
+
+    // ==== Flash Once Helpers ====
+    public void flashOnceForCoral(double pattern, double duration) {
+        if (!hasFlashedCoral) {
+            flashPattern(pattern, duration);
+            hasFlashedCoral = true;
+        }
+    }
+
+    public void flashOnceForAlgae(double pattern, double duration) {
+        if (!hasFlashedAlgae) {
+            flashPattern(pattern, duration);
+            hasFlashedAlgae = true;
+        }
+    }
+
+    public void flashOnceForGyroAlert(double pattern, double duration) {
+        if (!hasFlashedGyroAlert) {
+            flashPattern(pattern, duration);
+            hasFlashedGyroAlert = true;
+        }
+    }
+
+    public void clearCoralFlash() {
+        hasFlashedCoral = false;
+    }
+
+    public void clearAlgaeFlash() {
+        hasFlashedAlgae = false;
+    }
+
+    public void clearGyroAlertFlash() {
+        hasFlashedGyroAlert = false;
     }
 }

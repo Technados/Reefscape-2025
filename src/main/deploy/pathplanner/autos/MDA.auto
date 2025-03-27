@@ -37,15 +37,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "BackDL"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "CoralFeed"
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "MoveToAlgaeLow"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "BackDL"
+                }
+              }
+            ]
           }
         },
         {
@@ -53,15 +60,15 @@
           "data": {
             "commands": [
               {
-                "type": "path",
-                "data": {
-                  "pathName": "DAlgae"
-                }
-              },
-              {
                 "type": "named",
                 "data": {
                   "name": "AlgaeLow"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "DAlgae"
                 }
               }
             ]
@@ -91,9 +98,66 @@
           "data": {
             "commands": [
               {
+                "type": "wait",
+                "data": {
+                  "waitTime": 0.1
+                }
+              },
+              {
                 "type": "named",
                 "data": {
                   "name": "ScoreAlgae"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "MoveToAlgaeHigh"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "ShootE"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "AlgaeHigh"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "EShoot"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Start"
                 }
               }
             ]

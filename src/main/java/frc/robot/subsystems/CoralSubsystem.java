@@ -134,7 +134,7 @@ private void moveToSetpoint() {
 
   // Gravity Feedforward for Arm
   double rawFF = CoralSubsystemConstants.kArmGravityFF * Math.cos(armAngleRadians);
-  double gravityFFValue = Math.copySign(Math.max(Math.abs(rawFF), 0.05), rawFF); // Clamp to ±0.05 minimum
+  double gravityFFValue = Math.copySign(Math.max(Math.abs(rawFF), 0.075), rawFF); // Clamp to ±0.05 minimum
   
 
 
@@ -354,7 +354,7 @@ private void moveToSetpoint() {
         },
         () -> {
             this.setIntakePower(0.0);
-            ledSubsystem.resetToDefault(); // 🔹 Revert LED after ejecting
+            ledSubsystem.clearCoralFlash(); // 🔹 Revert LED after ejecting
         }
     ).withTimeout(0.50);
 }
@@ -436,11 +436,11 @@ public void applyFastArmConfig() {
     zeroOnUserButton();
 
     double current = intakeMotor.getOutputCurrent();
-    hasGamePiece = current > 20.0; // Game piece detected?
+    hasGamePiece = current > 36.0; // Game piece detected?
     SmartDashboard.putNumber("Coral/Intake Current", current);
 
     if (hasGamePiece) {
-      ledSubsystem.setPattern(0.93); // White
+      ledSubsystem.flashOnceForCoral(0.93, 2.0); // White
   }
   
   

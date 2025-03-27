@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.052784886633292,
-        "y": 7.158826089826729
+        "x": 7.56,
+        "y": 5.2925
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.501284886633292,
-        "y": 6.817326089826728
+        "x": 6.5520000000000005,
+        "y": 7.515499999999999
       },
       "isLocked": false,
-      "linkedName": "FeederLeft"
+      "linkedName": "Shoot"
     },
     {
       "anchor": {
-        "x": 3.709,
-        "y": 5.035
+        "x": 4.930247563816725,
+        "y": 5.013
       },
       "prevControl": {
-        "x": 3.471,
-        "y": 5.1754999999999995
+        "x": 5.4237426997609335,
+        "y": 5.86775864874348
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "FR"
+      "linkedName": null
     }
   ],
   "rotationTargets": [],
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 119.99999999999999
+    "rotation": 59.99999999999999
   },
   "reversed": false,
-  "folder": "Feeders",
+  "folder": "Algae",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 125.00000000000001
+    "rotation": 180.0
   },
   "useDefaultConstraints": true
 }

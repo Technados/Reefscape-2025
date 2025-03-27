@@ -61,10 +61,13 @@ public class RobotContainer {
     //NamedCommands.registerCommand("CoralPositionL2", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel2));
     //NamedCommands.registerCommand("CoralPositionL3", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel3));
     //NamedCommands.registerCommand("CoralPositionL4", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel4));
-    //NamedCommands.registerCommand("KnockBack", m_coralSubSystem.setSetpointCommand(Setpoint.kKnockBack));
+    NamedCommands.registerCommand("Start", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1));
     NamedCommands.registerCommand("Intake", m_coralSubSystem.runIntakeCommand().withTimeout(1.5));
     //NamedCommands.registerCommand("Outake", m_coralSubSystem.reverseIntakeCommand());
     NamedCommands.registerCommand("MoveToAlgaeScore", m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeScore1));
+    NamedCommands.registerCommand("MoveToAlgaeLow", m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeLow));
+    NamedCommands.registerCommand("MoveToAlgaeHigh", m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeHigh));
+
 
 
     // NamedCommands.registerCommand("Intake",
@@ -128,7 +131,7 @@ public class RobotContainer {
     new SequentialCommandGroup(
         new InstantCommand(() -> m_coralSubSystem.applyFastArmConfig()),
         m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeScore2),
-        new WaitUntilCommand(() -> Math.abs(m_coralSubSystem.getArmPosition() - 23) < 0.25),
+        new WaitUntilCommand(() -> Math.abs(m_coralSubSystem.getArmPosition() - 24) < 0.25),
         m_algaeSubsystem.reverseIntakeCommand().withTimeout(0.3),
         m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1),
         new InstantCommand(() -> m_coralSubSystem.applyNormalArmConfig())
@@ -138,7 +141,7 @@ public class RobotContainer {
     new SequentialCommandGroup(
         m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeLow),
         m_coralSubSystem.waitUntilIntakeSafe(Constants.CoralSubsystemConstants.ArmSetpoints.kAlgaeLow),
-        m_algaeSubsystem.runIntakeCommand().withTimeout(1.5),
+        m_algaeSubsystem.runIntakeCommand().withTimeout(1.25),
         m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1)
     ));
 
@@ -146,12 +149,14 @@ public class RobotContainer {
     new SequentialCommandGroup(
         m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeHigh),
         m_coralSubSystem.waitUntilIntakeSafe(Constants.CoralSubsystemConstants.ArmSetpoints.kAlgaeHigh),
-        m_algaeSubsystem.runIntakeCommand().withTimeout(1.5),
+        m_algaeSubsystem.runIntakeCommand().withTimeout(1.25),
         m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1)
 ));
 
-
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -165,6 +170,8 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+
+    m_robotDrive.resetGyroToFieldBackwards();
     // Configure the button bindings
     configureButtonBindings();
 
@@ -237,7 +244,7 @@ m_robotDrive.setDefaultCommand(
             m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeScore2),
     
             // STEP 2: Wait until arm near -23.5, then toss algae
-            new WaitUntilCommand(() -> Math.abs(m_coralSubSystem.getArmPosition() - 23.5) < 0.25),
+            new WaitUntilCommand(() -> Math.abs(m_coralSubSystem.getArmPosition() - 24) < 0.25),
             m_algaeSubsystem.reverseIntakeCommand().withTimeout(0.3), // Toss algae
     
             // STEP 3: Return to Level 1
@@ -274,6 +281,9 @@ m_robotDrive.setDefaultCommand(
 
     // Start Button -> Zero swerve heading
     m_driverController.start().onTrue(m_robotDrive.zeroHeadingCommand());
+
+    // Down on d-pad will reverse front intake only while pressed (if coral stuck)
+    m_driverController.povDown().whileTrue(m_coralSubSystem.reverseFrontIntakeCommand());
 
     // Right Bumper -> Enable Slow Mode While Held
     m_driverController.rightBumper()

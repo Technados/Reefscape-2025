@@ -124,7 +124,7 @@ private final CoralSubsystem coralSubsystem;
       
         this.coralSubsystem = coralSubsystem;
                   // set limelight alignment tolerance
-                  limelightTurnPID.setTolerance(3);
+                  limelightTurnPID.setTolerance(2);
                   limelightDistancePID.setTolerance(0.75);
                   limelightStrafePID.setTolerance(0.5);
 
@@ -167,7 +167,7 @@ private final CoralSubsystem coralSubsystem;
 
     SmartDashboard.putNumber("Gyro", getHeading()); // returns the heading of the robot and sends to dashboard
     if (!m_gyro.isConnected()) {
-      ledSubsystem.setPattern(0.61); // 🔴 Red if gyro offline
+      ledSubsystem.flashOnceForGyroAlert(0.61, 2.0); // 🔴 Red if gyro offline
   }
   
 
@@ -226,7 +226,7 @@ public void setSlowMode(boolean enable) {
 }
 
 // Threshold to auto-enable slow mode when elevator is high
-private static final double kElevatorSlowModeThreshold = 40.0; // <-- Set this to whatever height makes sense (encoder ticks)
+private static final double kElevatorSlowModeThreshold = 85.0; // <-- Set this to whatever height makes sense (encoder ticks)
 
 /**
  * Check if we need to enable slow mode based on elevator height or driver input.
@@ -400,9 +400,9 @@ public void alignToReef(Alignment alignment) {
   stopMovement();
   setSlowMode(false);
   drive(0, 0, 0, true); // Return to field-relative driving
-  ledSubsystem.flashPattern(0.91, 1.5); // Flash purple
 
   SmartDashboard.putString("ReefAlign Status", "Alignment Complete");
+  ledSubsystem.flashPattern(0.91, 2.0); // Flash purple
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// old reef align command - keeping temp until new one tested
@@ -550,6 +550,11 @@ public void alignToReef(Alignment alignment) {
     m_frontRight.setDesiredState(desiredStates[1]);
     m_rearLeft.setDesiredState(desiredStates[2]);
     m_rearRight.setDesiredState(desiredStates[3]);
+  }
+// The method below will set the gyro 180 deg adjusted angle to compensate for starting pose being bakward 
+  public void resetGyroToFieldBackwards() {
+    m_gyro.reset();
+    m_gyro.setAngleAdjustment(180);
   }
 
   /** Resets the drive encoders to currently read a position of 0. */

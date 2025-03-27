@@ -84,7 +84,7 @@ public class AlgaeSubsystem extends SubsystemBase {
         () -> {
             hasGamePiece = false;
             setIntakePower(0.0);
-            ledSubsystem.resetToDefault(); // 🔹 Revert LED after ejecting
+            ledSubsystem.clearAlgaeFlash(); // 🔹 Revert LED after ejecting
         }
     );
 }
@@ -93,11 +93,11 @@ public class AlgaeSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
       double current = intakeMotor.getOutputCurrent();
-      hasGamePiece = (current > 30); // Adjust threshold as needed
+      hasGamePiece = (current > 35); // Adjust threshold as needed
       SmartDashboard.putNumber("Algae/Intake Current", current);
 
       if (hasGamePiece) {
-        ledSubsystem.setPattern(0.77); // Teal for algae
+        ledSubsystem.flashOnceForAlgae(0.77, 2.0); // Teal for algae
     }
     
   }

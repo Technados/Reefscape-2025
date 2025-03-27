@@ -79,8 +79,8 @@ public final class Configs {
           .outputRange(-1, 1)
           .maxMotion
           // Set MAXMotion parameters for position control
-          .maxVelocity(5000)
-          .maxAcceleration(6000)
+          .maxVelocity(4000)
+          .maxAcceleration(4000)
           .allowedClosedLoopError(0.250);
 
       armFastConfig
