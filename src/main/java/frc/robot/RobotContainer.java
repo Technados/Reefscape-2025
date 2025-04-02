@@ -267,6 +267,8 @@ m_robotDrive.setDefaultCommand(
     );
 
     m_driverController.back().onTrue(m_coralSubSystem.setSetpointCommand(Setpoint.kLevel1));
+
+    m_driverController.b().onTrue(m_algaeSubsystem.reverseIntakeCommand().withTimeout(0.3)); // Toss algae)
     
     
 

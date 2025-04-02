@@ -41,7 +41,7 @@ public final class Constants {
       public static final double kLevel1 = 0;
       public static final double kLevel2 = 16;
       public static final double kLevel3 = 17.75;
-      public static final double kLevel4 = 18.7;
+      public static final double kLevel4 = 18.6;
       public static final double kKnockBack = 20.5;
       public static final double kAlgaeLow = 6.5;
       public static final double kAlgaeHigh = 6.5;
