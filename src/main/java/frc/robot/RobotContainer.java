@@ -225,7 +225,7 @@ m_robotDrive.setDefaultCommand(
     // Left Stick Button -> Set swerve to X
     m_driverController.leftStick().whileTrue(m_robotDrive.setXCommand());
     
-    // Hole left bumper to run intake and align to left/right substation
+    // Hold left bumper to run intake and align to left/right substation
     m_driverController.leftBumper().whileTrue(m_coralSubSystem.runIntakeCommand());
 
     // Run Algae motor w/ 'LT' and reverse with 'RT' button (for now)
@@ -244,7 +244,7 @@ m_robotDrive.setDefaultCommand(
             m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeScore2),
     
             // STEP 2: Wait until arm near -23.5, then toss algae
-            new WaitUntilCommand(() -> Math.abs(m_coralSubSystem.getArmPosition() - 24) < 0.25),
+            new WaitUntilCommand(() -> Math.abs(m_coralSubSystem.getArmPosition() - 24) < 0.25), //change 23 to 24 before comp!!
             m_algaeSubsystem.reverseIntakeCommand().withTimeout(0.3), // Toss algae
     
             // STEP 3: Return to Level 1

@@ -152,7 +152,7 @@ public static final class LimelightPID {
   public static final class DriveConstants {
     // Driving Parameters - Note that these are not the maximum capable speeds of
     // the robot, rather the allowed maximum speeds
-    public static final double kMaxSpeedMetersPerSecond = 4.0;
+    public static final double kMaxSpeedMetersPerSecond = 3;
     public static final double kMaxAngularSpeed = 2 * Math.PI; // radians per second
     public static final double kSlowSpeedFactor = 0.20; // Slow mode speed factor (40% of normal speed)
 
@@ -209,7 +209,7 @@ public static final class LimelightPID {
   public static final class OIConstants {
     public static final int kDriverControllerPort = 0;
     public static final int kOperatorControllerPort = 1;
-    public static final double kDriveDeadband = 0.05;
+    public static final double kDriveDeadband = 0.1;
     public static final double kTriggerButtonThreshold = 0.2;
   }
 
