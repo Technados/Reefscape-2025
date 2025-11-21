@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.CoralSubsystemConstants;
 import frc.robot.Constants.OIConstants;
-//import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.AlgaeSubsystem;
 import frc.robot.subsystems.CoralSubsystem;
 import frc.robot.subsystems.CoralSubsystem.Setpoint;
@@ -46,8 +45,6 @@ public class RobotContainer {
     private final AlgaeSubsystem m_algaeSubsystem = new AlgaeSubsystem(m_ledSubsystem);
     private final DriveSubsystem m_robotDrive = new DriveSubsystem(m_coralSubSystem, m_ledSubsystem);
     
-    
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,15 +66,6 @@ public class RobotContainer {
     NamedCommands.registerCommand("MoveToAlgaeHigh", m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeHigh));
     NamedCommands.registerCommand("AutoAlignLeft", m_robotDrive.alignToReefCommand(Alignment.LEFT));
 
-
-    // NamedCommands.registerCommand("Intake",
-    // new ParallelCommandGroup(
-
-    //     //m_coralSubSystem.waitUntilElevatorInPosition(CoralSubsystemConstants.ElevatorSetpoints.kFeederStation),
-    //     m_coralSubSystem.runFrontIntakeCommand(),
-    //     m_coralSubSystem.runIntakeCommand()
-    //     )
-    // );
 
     NamedCommands.registerCommand("ScoreL2",
     new SequentialCommandGroup(

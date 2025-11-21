@@ -4,6 +4,13 @@
 
 package frc.robot.subsystems;
 
+import com.kauailabs.navx.frc.AHRS;
+
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -12,24 +19,19 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.SerialPort;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import com.kauailabs.navx.frc.AHRS;
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import frc.robot.Constants;
 import frc.robot.Constants.AprilTagIDs;
-
 import frc.robot.Constants.DriveConstants;
+
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -55,15 +57,18 @@ private final PIDController limelightDistancePID = new PIDController(
     Constants.LimelightPID.kD_distance
 );
 
+// Sensors and objects
 private final NetworkTable limelight = NetworkTableInstance.getDefault().getTable("limelight");
+private final LEDSubsystem ledSubsystem;
+private final CoralSubsystem coralSubsystem;
+
+// The gyro sensor: NavX-2 Micro gyro from Kauai Labs
+// additional change: since using NavX-2 gyro, all getAngle calls in the drive sub system had to be chnaged to negative values
+// The NavX gyro is used to track the robot's orientation on the field.
 private final AHRS m_gyro = new AHRS(SerialPort.Port.kUSB);
 
-public enum Alignment {
-    LEFT,
-    RIGHT,
-    CENTER
-}
-private final CoralSubsystem coralSubsystem;
+public enum Alignment {LEFT,RIGHT,CENTER}
+
 
   // Create MAXSwerveModules
   private final MAXSwerveModule m_frontLeft =
@@ -90,15 +95,6 @@ private final CoralSubsystem coralSubsystem;
           DriveConstants.kRearRightTurningCanId,
           DriveConstants.kBackRightChassisAngularOffset);
 
-          
-  // The gyro sensor
-  // Next line is gyro setup for NavX-2 Micro gyro from Kauai Labs
-  //// Additional change: since using NavX-2 gyro, all getAngle calls in the drive
-  // sub system had to be chnaged to negative values
-  //private final AHRS m_gyro = new AHRS(SerialPort.Port.kUSB);
-    // The NavX gyro is used to track the robot's orientation on the field.
-
-
   // Odometry class for tracking robot pose
   SwerveDriveOdometry m_odometry =
       new SwerveDriveOdometry(
@@ -114,7 +110,7 @@ private final CoralSubsystem coralSubsystem;
       // PathPlanner RobotConfig
       private RobotConfig config;
 
-      private final LEDSubsystem ledSubsystem;
+      
       private boolean hasFlashedEndgame = false;
 
 
@@ -405,93 +401,6 @@ public void alignToReef(Alignment alignment) {
   ledSubsystem.flashPattern(0.91, 2.0); // Flash purple
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// old reef align command - keeping temp until new one tested
-/// 
-// private double lastValidTargetTime = 0; // Track when Limelight last updated
-
-// public void alignToReef(Alignment alignment) {
-//     int pipeline = (alignment == Alignment.LEFT) ? 0 : 1;
-//     limelight.getEntry("pipeline").setNumber(pipeline);
-
-//     double tx = limelight.getEntry("tx").getDouble(0.0);
-//     double ty = limelight.getEntry("ty").getDouble(0.0);
-//     int tagID = (int) limelight.getEntry("tid").getDouble(-1);
-
-//     // Ensure valid tag is detected
-//     if (tagID == -1) {
-//         stopMovement();
-//         setSlowMode(false);
-//         SmartDashboard.putString("ReefAlign Status", "No AprilTag Detected");
-//         return;
-//     }
-
-//     // Ensure data is fresh (no stale readings)
-//     // lastValidTargetTime = Timer.getFPGATimestamp();
-//     // double currentTime = Timer.getFPGATimestamp();
-//     // if (currentTime - lastValidTargetTime > 0.5) { // If Limelight data is stale
-//     //     stopMovement();
-//     //     setSlowMode(false);
-//     //     SmartDashboard.putString("ReefAlign Status", "Stale Data - Not Aligning");
-//     //     return;
-//     // }
-
-//     double targetHeading = getReefHeading(tagID);
-//     if (Double.isNaN(targetHeading)) {
-//         stopMovement();
-//         setSlowMode(false);
-//         SmartDashboard.putString("ReefAlign Status", "Invalid Target Heading");
-//         return;
-//     }
-
-//     // ✅ Enable Slow Drive Mode
-//     setSlowMode(true);
-
-//     // 🔹 Step 1: Align Heading First
-//     double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
-//     boolean turnComplete = limelightTurnPID.atSetpoint();
-
-//     if (!turnComplete) {
-//         drive(0, 0, turnPower, false);
-//         SmartDashboard.putString("ReefAlign Status", "Turning to Target");
-//         return;
-//     } else {
-//         drive(0, 0, 0, false); // Stop turning
-//     }
-
-//     // 🔹 Step 3: Move Forward to Reach the Reef
-//     double drivePower = limelightDistancePID.calculate(ty, 0);
-//     boolean driveComplete = limelightDistancePID.atSetpoint();
-    
-//     if (!driveComplete) {
-//         drive(drivePower, 0, 0, false);
-//         SmartDashboard.putString("ReefAlign Status", "Driving Forward");
-//         return;
-//      }
-
-//      // 🔹 Step 2: Strafe Until Crosshair is Centered
-//     double strafePower = -limelightStrafePID.calculate(tx, 0.0);
-//     boolean strafeComplete = limelightStrafePID.atSetpoint();
-
-//     // // ✅ Apply Deadband to prevent unnecessary micro-movements
-//     if (Math.abs(strafePower) < 0.00) {
-//         strafePower = 0;
-//     }
-
-//     if (!strafeComplete) {
-//         drive(0, strafePower, 0, false);
-//         SmartDashboard.putString("ReefAlign Status", "Strafing");
-//         return;
-//     }
-
-//     // 🔹 Final Stop Condition - All Steps Complete
-//     if (turnComplete && driveComplete && strafeComplete) {
-//         stopMovement();
-//         setSlowMode(false);
-//         drive(0, 0, 0, true); // ✅ Ensures next movement is field-relative
-//         SmartDashboard.putString("ReefAlign Status", "Alignment Complete");
-//     }
-// }
-/////////////////////////////////////////////////////////////////////////////////////////////////
 
   private double getReefHeading(int tagID) {
     switch (tagID) {
@@ -510,25 +419,6 @@ public void alignToReef(Alignment alignment) {
         default: return Double.NaN;
     }
 }
-  // public void alignToSubstation() {
-  //     int tagID = (int) limelight.getEntry("tid").getDouble(-1);
-  //     double targetHeading = (tagID == 6 || tagID == 19) ? 125.0 : (tagID == 17 || tagID == 8) ? -125.0 : Double.NaN;
-  //     if (targetHeading == Double.NaN) return;
-
-  //     double tx = limelight.getEntry("tx").getDouble(0.0);
-  //     double ty = limelight.getEntry("ty").getDouble(0.0);
-
-  //     double turnPower = limelightTurnPID.calculate(getHeading(), targetHeading);
-  //     double drivePower = limelightDistancePID.calculate(ty, Constants.DesiredDistances.SUBSTATION_PICKUP);
-
-  //     if (!limelightTurnPID.atSetpoint()) {
-  //         drive(0, 0, turnPower, false);
-  //     } else if (!limelightDistancePID.atSetpoint()) {
-  //         drive(drivePower, 0, 0, false);
-  //     } else {
-  //         drive(0, 0, 0, false);
-  //     }
-  // }
 
   public Command alignToReefCommand(Alignment alignment) {
       return new RunCommand(() -> alignToReef(alignment), this);
