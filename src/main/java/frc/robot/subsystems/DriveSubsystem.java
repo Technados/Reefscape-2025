@@ -68,6 +68,7 @@ private final CoralSubsystem coralSubsystem;
 private final AHRS m_gyro = new AHRS(SerialPort.Port.kUSB);
 
 public enum Alignment {LEFT,RIGHT,CENTER}
+private boolean reefAligned = false;
 
 
   // Create MAXSwerveModules
@@ -396,7 +397,7 @@ public void alignToReef(Alignment alignment) {
   stopMovement();
   setSlowMode(false);
   drive(0, 0, 0, true); // Return to field-relative driving
-
+  reefAligned = true; // allignment is complete, use this to end command
   SmartDashboard.putString("ReefAlign Status", "Alignment Complete");
   ledSubsystem.flashPattern(0.91, 2.0); // Flash purple
 }
@@ -420,13 +421,16 @@ public void alignToReef(Alignment alignment) {
     }
 }
 
+  // Command for reefalign, called by the WPI scheduler to run alignToReef method 
   public Command alignToReefCommand(Alignment alignment) {
-      return new RunCommand(() -> alignToReef(alignment), this);
+      return new RunCommand(() -> alignToReef(alignment), this)
+        .beforeStarting(() -> {
+          reefAligned = false; // set to false at the start of each align 
+          setSlowMode(true);
+        })
+        .until(() -> reefAligned); // ends command when reef align is true
   }
 
-  // public Command alignToSubstationCommand() {
-  //     return new RunCommand(this::alignToSubstation, this);
-  // }
 
   /**
    * Sets the swerve ModuleStates.
