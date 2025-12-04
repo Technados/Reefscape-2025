@@ -291,9 +291,9 @@ m_robotDrive.setDefaultCommand(
     m_driverController.povRight().whileTrue(m_robotDrive.alignToReefCommand(Alignment.RIGHT))
     .onFalse(new InstantCommand(() -> m_robotDrive.setSlowMode(false))); // ✅ Release slow mode
 
-        // D-pad Right -> Align to reef using pipeline 1 (RIGHT alignment)
-        m_driverController.povUp().whileTrue(m_robotDrive.alignToReefCommand(Alignment.CENTER))
-        .onFalse(new InstantCommand(() -> m_robotDrive.setSlowMode(false))); // ✅ Release slow mode
+    // D-pad Up -> Align to reef using pipeline 2 (CENTER alignment)
+    m_driverController.povUp().whileTrue(m_robotDrive.alignToReefCommand(Alignment.CENTER))
+    .onFalse(new InstantCommand(() -> m_robotDrive.setSlowMode(false))); // ✅ Release slow mode
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
