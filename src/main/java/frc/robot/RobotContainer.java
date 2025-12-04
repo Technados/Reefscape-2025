@@ -65,6 +65,8 @@ public class RobotContainer {
     NamedCommands.registerCommand("MoveToAlgaeLow", m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeLow));
     NamedCommands.registerCommand("MoveToAlgaeHigh", m_coralSubSystem.setSetpointCommand(Setpoint.kAlgaeHigh));
     NamedCommands.registerCommand("AutoAlignLeft", m_robotDrive.alignToReefCommand(Alignment.LEFT));
+    NamedCommands.registerCommand("AutoAlignCenter", m_robotDrive.alignToReefCommand(Alignment.CENTER));
+    NamedCommands.registerCommand("AutoAlignRight", m_robotDrive.alignToReefCommand(Alignment.RIGHT));
 
 
     NamedCommands.registerCommand("ScoreL2",
