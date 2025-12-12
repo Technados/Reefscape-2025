@@ -309,8 +309,6 @@ m_robotDrive.setDefaultCommand(
     m_operatorController.povRight().whileTrue(m_robotDrive.alignToReefCommand(Alignment.RIGHT))
     .onFalse(new InstantCommand(() -> m_robotDrive.setSlowMode(false))); // ✅ Release slow mode
 
-
-
     // B Button -> Elevator/Arm to human player position
     m_operatorController.b().onTrue(m_coralSubSystem.setSetpointCommand(Setpoint.kFeederStation));
     
